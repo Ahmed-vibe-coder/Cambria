@@ -78,61 +78,30 @@ export async function loginAction(prevState: any, formData: FormData) {
     };
   }
 
-  // 3. Supabase Auth if cloud configured, else PostgreSQL staff_users verification
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (supabaseUrl && supabaseUrl.includes(".supabase.co")) {
-    try {
-      const supabase = await createServerSupabaseClient();
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+  // 3. Look up administrative staff user from database (Supabase staff_users table or fallback)
+  const staffUser = await getStaffUserByEmail(email);
 
-      if (error) {
-        await addAuditLog({
-          entity_type: "auth",
-          entity_id: email,
-          action: "login_failed",
-          actor_email: email,
-          reason: "Invalid staff credentials attempt (Supabase)",
-          ip_address: ip,
-          user_agent: userAgent,
-        });
+  // Constant-time check pattern to avoid timing enumeration
+  const dummyHash =
+    "scrypt:00000000000000000000000000000000:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+  const hashToVerify = staffUser ? staffUser.password_hash : dummyHash;
+  const isPasswordValid = verifyPassword(password, hashToVerify);
 
-        return {
-          success: false,
-          error: "Invalid staff credentials or unapproved account.",
-        };
-      }
-    } catch {
-      return { success: false, error: "Authentication system error." };
-    }
-  } else {
-    // Verified against real PostgreSQL staff_users table with salted scrypt hashing
-    const staffUser = await getStaffUserByEmail(email);
+  if (!staffUser || !isPasswordValid) {
+    await addAuditLog({
+      entity_type: "auth",
+      entity_id: email,
+      action: "login_failed",
+      actor_email: email,
+      reason: "Invalid staff credentials attempt",
+      ip_address: ip,
+      user_agent: userAgent,
+    });
 
-    // Constant-time check pattern to avoid timing enumeration
-    const dummyHash =
-      "scrypt:00000000000000000000000000000000:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-    const hashToVerify = staffUser ? staffUser.password_hash : dummyHash;
-    const isPasswordValid = verifyPassword(password, hashToVerify);
-
-    if (!staffUser || !isPasswordValid) {
-      await addAuditLog({
-        entity_type: "auth",
-        entity_id: email,
-        action: "login_failed",
-        actor_email: email,
-        reason: "Invalid staff credentials attempt",
-        ip_address: ip,
-        user_agent: userAgent,
-      });
-
-      return {
-        success: false,
-        error: "Invalid staff credentials or unapproved account.",
-      };
-    }
+    return {
+      success: false,
+      error: "Invalid staff credentials or unapproved account.",
+    };
   }
 
   // Password matched -> Issue temporary MFA challenge session & audit log
