@@ -176,10 +176,10 @@ export default function MajorsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="w-full text-xs text-cambria-academic hover:bg-cambria-soft font-semibold gap-1.5 justify-start p-0 h-auto"
+                          className="w-full text-xs text-cambria-academic hover:bg-cambria-soft font-semibold gap-1.5 justify-start p-0 h-auto group"
                         >
                           View Qualifying Programs
-                          <ArrowRight className="w-3 h-3" />
+                          <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
                         </Button>
                       </Link>
                     </div>

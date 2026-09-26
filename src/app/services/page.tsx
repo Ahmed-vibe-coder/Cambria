@@ -121,10 +121,10 @@ export default function ServicesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-cambria-navy/40 hover:bg-cambria-navy hover:text-white font-medium gap-1.5"
+                        className="border-cambria-navy/40 hover:bg-cambria-navy hover:text-white font-medium gap-1.5 group"
                       >
                         {service.actionText}
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                       </Button>
                     </Link>
                   </div>

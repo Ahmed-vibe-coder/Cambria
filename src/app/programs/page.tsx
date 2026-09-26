@@ -111,9 +111,9 @@ export default async function ProgramsPage() {
 
                   <div className="lg:col-span-3 flex justify-start lg:justify-end pt-2">
                     <Link href="/contact">
-                      <Button variant="outline" size="sm" className="font-medium gap-1.5">
+                      <Button variant="outline" size="sm" className="font-medium gap-1.5 group">
                         Inquire with Registrar
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                       </Button>
                     </Link>
                   </div>
@@ -186,9 +186,9 @@ export default async function ProgramsPage() {
 
                   <div className="lg:col-span-3 flex justify-start lg:justify-end pt-2">
                     <Link href="/contact">
-                      <Button variant="outline" size="sm" className="font-medium gap-1.5">
+                      <Button variant="outline" size="sm" className="font-medium gap-1.5 group">
                         Inquire with Registrar
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                       </Button>
                     </Link>
                   </div>
@@ -261,9 +261,9 @@ export default async function ProgramsPage() {
 
                   <div className="lg:col-span-3 flex justify-start lg:justify-end pt-2">
                     <Link href="/contact">
-                      <Button variant="outline" size="sm" className="font-medium gap-1.5">
+                      <Button variant="outline" size="sm" className="font-medium gap-1.5 group">
                         Inquire with Registrar
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                       </Button>
                     </Link>
                   </div>

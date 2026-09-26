@@ -73,3 +73,35 @@ This log documents all architectural and product decisions made during planning 
   - Enforce a strict **4px–8px maximum border radius** (`--radius: 6px`) across all components and shadcn overrides.
   - Restrict the Gold accent (`#C8A84E`) to ≤5% of the visual space (dividers, badges, stars).
   - Use numbered catalog lists instead of generic card grids for academic programs.
+
+---
+
+## Decision 006: Retention of Editorial Numbered-List Catalog Layout Over Photo-Tile Icon-Cards
+
+- **Date**: 2026-09-26
+- **Status**: Open Client Consultation Item (Retained by Brand Default)
+- **Context**: The benchmark reference site utilizes colorful photo-tile "icon cards" with large image backgrounds for its services and curriculum catalog. The client requested adopting structural ideas from the reference site into Cambria's system.
+- **Evaluation**:
+  - The original Cambria brand specification explicitly rejected icon-card grids in favor of an **editorial numbered-list catalog** (`01.`, `02.`, `03.`) featuring expansive Cormorant Garamond typography, generous whitespace, and fine gold hairlines.
+  - Photo-tile cards inherently demand stock photography of generic classrooms or business people, violating §1 (No Stock Photography).
+- **Decision**:
+  - Maintain the locked editorial numbered-list catalog layout across `/programs`, `/majors`, and `/services`.
+  - Log this as an open consideration for the client. If the client explicitly requests a card grid after review, that decision will be addressed in a future design iteration with real institutional photography only.
+- **Consequences**:
+  - Preserves Cambria's unique editorial prestige and prevents visual degradation into a generic SaaS appearance.
+
+---
+
+## Decision 007: Deferral of "Global Presence / Regional Agencies" Page
+
+- **Date**: 2026-09-26
+- **Status**: Open Client Consultation Item (Deferred Pending Data)
+- **Context**: The reference site features a standalone page listing international regional agencies (US, Europe, London, MENA, East Asia).
+- **Evaluation**:
+  - Cambria's approved sitemap (`docs/ROUTES.md`) does not include an independent Regional Agencies page.
+  - Adding this page without verified physical addresses, liaison officers, or regulatory registration numbers would require fabricating placeholder data, violating §1.
+- **Decision**:
+  - Do NOT build an unprompted `/global-presence` or `/agencies` page.
+  - If the client confirms that Cambria operates authorized regional liaison offices and provides real street addresses and contact channels, the page will be constructed using the locked editorial numbered layout.
+- **Consequences**:
+  - Zero fabricated institutional presence; 100% regulatory and factual integrity maintained.

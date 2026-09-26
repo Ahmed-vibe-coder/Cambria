@@ -108,3 +108,41 @@ All shadcn/ui components are disciplined to honor the Cambria brand tokens:
 - **Badge**: `rounded-[4px]`, uppercase tracking-wider text, 11px font size, subtle pastel backgrounds with matching borders.
 - **Input / Select**: `rounded-[4px]`, border `#CBD5E1`, focus border `#243A8F` with 2px offset focus ring.
 - **Dialog / Sheet**: `rounded-[8px]`, crisp border, backdrop with dark navy tint (`rgba(7, 19, 63, 0.4)`).
+
+---
+
+## 6. Reference-Site Translated Components (Editorial Specifications)
+
+The following components translate structural ideas from the reference site into Cambria's locked identity system:
+
+### 6.1 Value Strip (`<ValueStrip />` / `<ValueStripPanel />`)
+- **Structure**: 3 equal-width columns directly under the hero fold.
+- **Palette**: Alternating `bg-cambria-offwhite` (`#F8F9FC`), `bg-cambria-soft/60` (`#EAF0FF`), `bg-cambria-offwhite` (`#F8F9FC`).
+- **Border**: 1px solid `border-slate-200` with subtle `hover:border-cambria-academic/30` transition.
+- **Icon Frame**: 44px circular frame (`rounded-full`) with dual-ring border (`border border-slate-200 bg-white ring-2 ring-slate-100/80`), icon in `text-cambria-navy`.
+- **Typography**: Inter 14px bold (`font-semibold`) title, 13px regular (`text-slate-600`) supporting copy.
+- **Content Mandate**: Real institutional claims only (Transnational Academic Registry, Cryptographic Verification, Modular Executive Curricula).
+
+### 6.2 Editorial Welcome Overlap Card (`<EditorialWelcomeCard />`)
+- **Structure**: Asymmetric 2-column layout (5 cols left visual / 7 cols right card) with negative margin overlap.
+- **Left Visual**: Circular seal medallion frame (`w-80 h-80 rounded-full border-2 border-slate-200 bg-white shadow-card`) with official Cambria seal, watermark background geometry, and gold star accent.
+- **Right Overlap Card**: `bg-white border border-slate-200 rounded-[6px] shadow-card p-8 md:p-10 border-l-4 border-l-[#C8A84E]`.
+- **Typography**: Eyebrow `WELCOME MESSAGE` (Inter 11px uppercase tracking-[0.2em] text-[#C8A84E]), Heading in Cormorant Garamond (28px-32px font-bold text-cambria-navy), Body in Inter (15px text-slate-600 leading-relaxed).
+
+### 6.3 Circular Composite Achievement Visual (`<AchievementVisual />`)
+- **Structure**: Full-width Deep Navy (`#07133F`) band with key verified institutional metrics on left, circular composite medallion on right.
+- **Framing Motif**: Dual concentric rings (`w-64 h-64 sm:w-72 sm:h-72 rounded-full border border-white/20 p-3 ring-1 ring-[#C8A84E]/30`) enclosing the official circular emblem with a subtle gold star accent (`★`) at the 1 o'clock perimeter.
+- **Metrics**: 2-4 verified institutional figures (e.g. 4 Accredited Postgraduate Curricula, 100% Cryptographic Verification, 0 Compromised Records). Zero fabricated student counts.
+
+### 6.4 Editorial Quote Card (`<QuoteCard />`)
+- **Structure**: Surface card (`bg-white border border-slate-200 rounded-[6px] p-6 shadow-subtle`).
+- **Quotation Mark Accent**: Gold quotation glyph (`#C8A84E`, font-serif text-3xl opacity-75).
+- **Divider**: Dual-hairline divider (`border-b border-slate-100 pb-4 mb-4`).
+- **Attribution**: Author name in Inter bold, role/discipline in Inter 12px muted.
+- **Content Mandate**: Genuine verified quotes only. Unverified sections marked honestly as pending registrar submission.
+
+### 6.5 Restrained Animation Tokens
+- `fade-up`: Subtle opacity and translate-y entrance (`transition-all duration-300 ease-out`).
+- `line-expand`: Gold hairline divider expanding from 0 to full width (`transition-all duration-500 ease-out`).
+- `hover-arrow`: Right arrow nudge on interactive cards (`group-hover:translate-x-1.5 transition-transform duration-200`).
+- `subtle-crossfade`: Slow 6-8s opacity transition for hero subhead rotating taglines. Zero auto-rotating full-page carousels.

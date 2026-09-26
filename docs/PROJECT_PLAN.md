@@ -185,3 +185,19 @@ graph TD
   3. Write root `README.md` with complete installation, local migration, seed data, and run instructions.
   4. Final update to `/docs/PROGRESS.md` confirming full completion.
 - **Acceptance Gate**: `npm run build` passes with zero errors and clean output.
+
+---
+
+## Phase 12: Reference-Site Structural Translation & Editorial Enhancement
+- **Scope**: Translate selected structural/UX ideas from the benchmark reference site into Cambria's locked brand identity without stock photos, fabricated stats, or unapproved card grids.
+- **Dependencies**: Phase 3, Phase 10.
+- **Tasks**:
+  1. Build subtle headline tagline rotation component (`<TaglineRotator />`) for editorial hero crossfade.
+  2. Implement three-point value strip (`<ValueStrip />`) in Off-White / Soft Blue with circular icon framing.
+  3. Implement editorial welcome overlap card (`<EditorialWelcomeCard />`) with thin gold left border and Cormorant Garamond typography.
+  4. Build full-width Deep Navy "Why Cambria" stat band (`<InstitutionalStatBand />`) with honest verified metrics only.
+  5. Implement circular composite achievement visual (`<AchievementVisual />`) with concentric double-ring framing and gold star accent.
+  6. Build editorial quote cards (`<QuoteCard />`) with gold quotation glyphs and strict attribution rules.
+  7. Apply consistent restrained animation layer (`fade-up`, `line-expand`, `hover-arrow`) across all public pages.
+  8. Log open architectural questions in `docs/DECISIONS.md` and content dependencies in `docs/CONTENT_NEEDED.md`.
+- **Acceptance Gate**: Zero reference-site red colors or photo-card patterns leaked in; zero fabricated figures; clean build (`npm run build`).

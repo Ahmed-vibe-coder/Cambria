@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { CambriaSeal } from "@/components/ui/cambria-seal";
 import { DoubleRingDivider } from "@/components/ui/double-ring-divider";
 import { GoldStar } from "@/components/ui/gold-star";
+import { TaglineRotator } from "@/components/ui/tagline-rotator";
+import { ValueStrip } from "@/components/ui/value-strip";
+import { EditorialWelcomeCard } from "@/components/ui/editorial-welcome-card";
+import { InstitutionalStatBand } from "@/components/ui/institutional-stat-band";
+import { AchievementVisual } from "@/components/ui/achievement-visual";
+import { QuoteSection } from "@/components/ui/quote-card";
 import { getPrograms } from "@/lib/db";
 import {
   ShieldCheck,
@@ -13,7 +19,6 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
-  FileCheck,
   Search,
   Building2,
   GraduationCap,
@@ -28,7 +33,7 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col">
       {/* 1. EDITORIAL HERO SECTION */}
-      <section className="relative bg-cambria-navy text-white pt-20 pb-28 md:pt-28 md:pb-36 overflow-hidden border-b border-cambria-deep">
+      <section className="relative bg-cambria-navy text-white pt-20 pb-24 md:pt-28 md:pb-32 overflow-hidden border-b border-cambria-deep">
         {/* Subtle Watermark Seal */}
         <div
           className="absolute right-[-10%] top-[10%] pointer-events-none opacity-[0.035] select-none transform rotate-6"
@@ -58,20 +63,27 @@ export default async function HomePage() {
 
               <DoubleRingDivider variant="dark" />
 
-              <p className="text-lg sm:text-xl text-slate-300 font-normal leading-relaxed max-w-2xl">
-                Cambria International College provides specialized executive programs,
-                professional diplomas, and cryptographic credentialing tailored for modern
-                organizational leaders and global scholars.
-              </p>
+              {/* Subhead with Restrained Crossfade Tagline Rotation */}
+              <div className="space-y-2 max-w-2xl">
+                <p className="text-lg sm:text-xl text-slate-300 font-normal leading-relaxed">
+                  Cambria International College provides specialized executive programs,
+                  professional diplomas, and cryptographic credentialing tailored for modern
+                  organizational leaders and global scholars.
+                </p>
+                <div className="text-xs sm:text-sm font-medium text-[#C8A84E] tracking-wider uppercase flex items-center gap-2 pt-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#C8A84E] animate-pulse shrink-0" />
+                  <TaglineRotator />
+                </div>
+              </div>
 
               <div className="pt-4 flex flex-wrap gap-4 items-center">
                 <Link href="/programs">
                   <Button
                     size="lg"
-                    className="bg-[#C8A84E] text-cambria-deep hover:bg-[#B89840] font-semibold gap-2 shadow-subtle"
+                    className="bg-[#C8A84E] text-cambria-deep hover:bg-[#B89840] font-semibold gap-2 shadow-subtle group"
                   >
                     Explore Academic Programs
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </Button>
                 </Link>
                 <Link href="/verify">
@@ -112,12 +124,12 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* Right Emblem Vignette (Seal Geometry without stock photos) */}
+            {/* Right Emblem Vignette */}
             <div className="lg:col-span-4 flex justify-center">
               <div className="relative p-6 sm:p-8 rounded-full border border-white/15 bg-white/[0.02] backdrop-blur-sm">
                 <div className="absolute inset-0 rounded-full border border-[#C8A84E]/30 animate-pulse" />
                 <div className="relative p-6 rounded-full border-2 border-dashed border-white/20 bg-cambria-deep/80 shadow-2xl flex flex-col items-center justify-center text-center">
-                  <CambriaSeal size={180} variant="white" />
+                  <CambriaSeal size={180} variant="white" priority />
                   <div className="mt-4 pt-3 border-t border-white/10 text-center">
                     <span className="block font-serif text-sm tracking-wider uppercase text-white font-semibold">
                       Cambria Seal
@@ -133,37 +145,18 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      {/* 2. SIGNATURE VERIFICATION CALLOUT */}
-      <section className="bg-cambria-deep text-white py-12 border-b border-white/10">
+      {/* 2. THREE-POINT VALUE STRIP (Under-Fold Benefit Panels) */}
+      <ValueStrip />
+
+      {/* 3. EDITORIAL WELCOME OVERLAP SECTION */}
+      <Section variant="offwhite">
         <Container>
-          <div className="bg-white/5 border border-white/10 rounded-[6px] p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-5">
-              <div className="w-14 h-14 rounded-[4px] bg-[#C8A84E]/10 border border-[#C8A84E]/30 flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-8 h-8 text-[#C8A84E]" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-serif text-2xl font-semibold text-white">
-                  Institutional Credential Verification Portal
-                </h3>
-                <p className="text-sm text-slate-300">
-                  Every diploma, certificate, and student card issued by Cambria contains a unique
-                  sequential serial number and cryptographic verification QR token.
-                </p>
-              </div>
-            </div>
-
-            <Link href="/verify" className="shrink-0 w-full md:w-auto">
-              <Button className="w-full md:w-auto bg-[#C8A84E] text-cambria-deep hover:bg-[#B89840] font-semibold gap-2">
-                <Search className="w-4 h-4" />
-                Launch Verification Engine
-              </Button>
-            </Link>
-          </div>
+          <EditorialWelcomeCard />
         </Container>
-      </section>
+      </Section>
 
-      {/* 3. ACADEMIC PROGRAMS CATALOG (Editorial Numbered List) */}
-      <Section variant="offwhite" watermark>
+      {/* 4. ACADEMIC PROGRAMS CATALOG (Locked Editorial Numbered List) */}
+      <Section variant="white" watermark>
         <Container>
           <div className="max-w-2xl mb-12">
             <span className="text-xs uppercase tracking-[0.2em] font-semibold text-cambria-academic block mb-2">
@@ -184,7 +177,7 @@ export default async function HomePage() {
             {highlightedPrograms.map((prog, idx) => (
               <div
                 key={prog.id}
-                className="py-8 group transition-colors hover:bg-white/60 px-4 -mx-4 rounded-[4px]"
+                className="py-8 group transition-colors hover:bg-slate-50/80 px-4 -mx-4 rounded-[4px]"
               >
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-baseline">
                   {/* Serial Number */}
@@ -264,45 +257,30 @@ export default async function HomePage() {
         </Container>
       </Section>
 
-      {/* 4. INSTITUTIONAL ACCREDITATION & ETHOS */}
-      <Section variant="white">
-        <Container>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <div className="lg:col-span-5 flex justify-center">
-              <div className="w-full max-w-md p-8 bg-cambria-offwhite border border-slate-200 rounded-[6px] shadow-card text-center relative overflow-hidden">
-                <div className="inline-block p-4 rounded-full bg-white border border-slate-200 mb-4">
-                  <CambriaSeal size={100} variant="navy" />
-                </div>
-                <h4 className="font-serif text-xl font-bold text-cambria-navy">
-                  Academic Integrity Charter
-                </h4>
-                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                  Registered under transnational academic bylaws with strict verification protocols
-                  protecting degree holders and partner employers worldwide.
-                </p>
-                <div className="mt-6 pt-4 border-t border-slate-200 flex justify-around text-xs text-slate-600">
-                  <div>
-                    <span className="block font-serif text-xl font-bold text-cambria-navy">100%</span>
-                    Verifiable Records
-                  </div>
-                  <div className="border-r border-slate-200" />
-                  <div>
-                    <span className="block font-serif text-xl font-bold text-cambria-navy">Zero</span>
-                    Unverified Issuance
-                  </div>
-                </div>
-              </div>
-            </div>
+      {/* 5. DARK "WHY CAMBRIA" STAT BAND (Full-Width Benchmark Metrics) */}
+      <InstitutionalStatBand />
 
+      {/* 6. ACHIEVEMENTS & CRYPTOGRAPHIC CREDENTIAL STANDARD */}
+      <Section variant="navy" className="text-white relative overflow-hidden">
+        <div
+          className="absolute -right-24 -bottom-24 pointer-events-none opacity-[0.035]"
+          aria-hidden="true"
+        >
+          <CambriaSeal size={550} variant="white" />
+        </div>
+
+        <Container className="relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            {/* Left Narrative */}
             <div className="lg:col-span-7 space-y-6">
-              <span className="text-xs uppercase tracking-[0.2em] font-semibold text-cambria-academic block">
-                Ethos & Governance
+              <span className="text-xs uppercase tracking-[0.2em] font-semibold text-[#C8A84E] block">
+                Verification Ledger Architecture
               </span>
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-semibold text-cambria-navy tracking-tight leading-tight">
-                An Educational Standard Grounded in Verification
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-semibold text-white tracking-tight leading-tight">
+                An Educational Standard Grounded in Cryptographic Proof
               </h2>
-              <DoubleRingDivider />
-              <p className="text-slate-600 text-base leading-relaxed">
+              <DoubleRingDivider variant="dark" />
+              <p className="text-slate-300 text-base leading-relaxed font-light">
                 In an era of proliferating unverified digital credentials, Cambria International College
                 maintains an immutable, centralized verification ledger. Every graduate&apos;s achievement
                 is permanently stored and provable through our sovereign verification registry.
@@ -310,39 +288,85 @@ export default async function HomePage() {
 
               <div className="space-y-3 pt-2">
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-                  <p className="text-sm text-slate-700">
-                    <strong>Unified Credential Identity:</strong> Certificates and Student Cards share a single
+                  <CheckCircle2 className="w-5 h-5 text-[#C8A84E] shrink-0 mt-0.5" />
+                  <p className="text-sm text-slate-200">
+                    <strong className="text-white">Unified Credential Identity:</strong> Certificates and Student Cards share a single
                     verification token and sequential serial number.
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-                  <p className="text-sm text-slate-700">
-                    <strong>Bilingual OpenType Rendering:</strong> Full native Arabic (Cairo / Noto Naskh)
+                  <CheckCircle2 className="w-5 h-5 text-[#C8A84E] shrink-0 mt-0.5" />
+                  <p className="text-sm text-slate-200">
+                    <strong className="text-white">Bilingual OpenType Rendering:</strong> Full native Arabic (Cairo / Noto Naskh)
                     and English typography shaped with vector precision.
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-                  <p className="text-sm text-slate-700">
-                    <strong>Complete Audit Trail:</strong> Every issuance, state change, and regeneration
+                  <CheckCircle2 className="w-5 h-5 text-[#C8A84E] shrink-0 mt-0.5" />
+                  <p className="text-sm text-slate-200">
+                    <strong className="text-white">Complete Audit Trail:</strong> Every issuance, state change, and regeneration
                     is recorded in an immutable institutional ledger.
                   </p>
                 </div>
               </div>
 
-              <div className="pt-4">
+              <div className="pt-4 flex flex-wrap gap-4">
+                <Link href="/verify">
+                  <Button className="bg-[#C8A84E] text-cambria-deep hover:bg-[#B89840] font-semibold gap-2 shadow-subtle group">
+                    <Search className="w-4 h-4" />
+                    Open Verification Search
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </Link>
                 <Link href="/about">
-                  <Button variant="outline" className="border-cambria-navy text-cambria-navy hover:bg-cambria-soft font-medium">
-                    Read Institutional Governance Charter
+                  <Button
+                    variant="outline"
+                    className="border-white/30 text-white bg-white/5 hover:bg-white/10 hover:border-white font-medium"
+                  >
+                    Read Governance Charter
                   </Button>
                 </Link>
               </div>
             </div>
+
+            {/* Right Circular Composite Achievement Visual */}
+            <div className="lg:col-span-5 flex justify-center">
+              <AchievementVisual />
+            </div>
           </div>
         </Container>
       </Section>
+
+      {/* 7. INSTITUTIONAL VOICES & ETHOS (Quote Cards) */}
+      <QuoteSection />
+
+      {/* 8. BOTTOM CALLOUT / ADMISSION INQUIRY */}
+      <section className="bg-cambria-deep text-white py-14 border-t border-white/10">
+        <Container>
+          <div className="bg-white/5 border border-white/10 rounded-[6px] p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="space-y-1 max-w-xl">
+              <h3 className="font-serif text-2xl font-semibold text-white">
+                Begin Your Executive Study with Cambria
+              </h3>
+              <p className="text-sm text-slate-300">
+                Admissions for upcoming cohort intakes are managed directly through the Registrar Liaison Office.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link href="/contact">
+                <Button className="bg-[#C8A84E] text-cambria-deep hover:bg-[#B89840] font-semibold text-xs px-5 py-2.5">
+                  Registrar Direct Inquiry
+                </Button>
+              </Link>
+              <Link href="/programs">
+                <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 text-xs px-5 py-2.5">
+                  View Curricula
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Container>
+      </section>
     </div>
   );
 }

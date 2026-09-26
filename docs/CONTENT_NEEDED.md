@@ -46,3 +46,18 @@ Per the non-negotiable architectural mandates (§2, §10, §11.6), this platform
 | Content Item | Current State in System | Required From Client | Impacted Surface |
 |---|---|---|---|
 | Primary Administrative Headquarters | Rendered with official London/International liaison office format | Physical campus building address, direct registrar phone, support mailbox | `/contact`, Footer |
+
+---
+
+## 6. Reference-Site Structural Enhancement Dependencies (Phase 12)
+
+The following specific items are required to transition the structural benchmark sections from their honest pending/stub state to full production copy:
+
+| Content Item | Current State in System | Required From Client | Impacted Surface |
+|---|---|---|---|
+| **Value Strip Institutional Claims** | Rendered with 3 verified platform pillars: Transnational Registry, Cryptographic Verification, Modular Executive Curriculum | Specific marketing value proposition statements if distinct from platform standards | Homepage (`/`) Value Strip |
+| **"Why Cambria" Cumulative Metrics** | Rendered with 4 accredited curricula, 100% on-ledger verification rate, 0 compromised records | Historical cumulative totals: verified alumni count, institutional partnerships count, academic operating years | Homepage (`/`) "Why Cambria" Stat Band |
+| **Welcome Message Official Photography** | Rendered with official circular emblem medallion and watermark geometry; photo omitted | High-resolution photography of Dean/Chancellor or campus executive headquarters | About / Home Welcome Overlap Card |
+| **Achievement Circular Photo Composite** | Rendered with geometric circular emblem framing and gold star accent; photo composite omitted | High-resolution graduation/commencement photography suitable for circular cropping | Homepage (`/`) Achievement Section |
+| **Real Graduate & Employer Testimonials** | Rendered with institutional perspective notice; zero fabricated quotes | 2–3 authentic quotes from real program graduates or institutional partners, with full names, titles, and program codes | Homepage (`/`) Quote Cards Section |
+| **Global Presence / Regional Office Verification** | Omitted completely from navigation pending client confirmation | Confirmation whether Cambria maintains physical regional liaison offices (e.g. UK, UAE, MENA, EU) with addresses | Potential `/global-presence` (Decided against until confirmed) |

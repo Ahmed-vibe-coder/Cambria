@@ -107,3 +107,15 @@ This document tracks the live implementation progress across all milestones of t
 - [x] 11.2 Configure `robots.txt` and `sitemap.ts`
 - [x] 11.3 Write comprehensive root `README.md` with setup, migrations, and run instructions
 - [x] 11.4 Final verification of all Definition of Done items
+
+---
+
+### Phase 12: Reference-Site Structural Translation & Editorial Enhancement
+- [x] 12.1 Build subtle headline tagline rotation component (`<TaglineRotator />`) for editorial hero crossfade
+- [x] 12.2 Implement three-point value strip (`<ValueStrip />`) in Off-White / Soft Blue with circular icon framing
+- [x] 12.3 Implement editorial welcome overlap card (`<EditorialWelcomeCard />`) with thin gold left border
+- [x] 12.4 Build full-width Deep Navy "Why Cambria" stat band (`<InstitutionalStatBand />`) with honest verified metrics
+- [x] 12.5 Implement circular composite achievement visual (`<AchievementVisual />`) with concentric double-ring framing
+- [x] 12.6 Build editorial quote cards (`<QuoteCard />`) with gold quotation glyphs and strict attribution rules
+- [x] 12.7 Apply consistent restrained animation layer (`fade-up`, `line-expand`, `hover-arrow`) across all public pages
+- [x] 12.8 Log open architectural questions in `docs/DECISIONS.md` and content dependencies in `docs/CONTENT_NEEDED.md`
