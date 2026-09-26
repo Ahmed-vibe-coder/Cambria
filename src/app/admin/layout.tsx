@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CambriaSeal } from "@/components/ui/cambria-seal";
 import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/actions/auth";
+import { cookies } from "next/headers";
 import {
   LayoutDashboard,
   Users,
@@ -27,11 +28,21 @@ const sidebarLinks = [
 
 export const dynamic = "force-dynamic";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("cambria_staff_session");
+  const mfaCookie = cookieStore.get("cambria_staff_mfa_verified");
+  const isAuthenticated = Boolean(sessionCookie?.value && mfaCookie?.value === "true");
+
+  // Pre-authentication views (login, mfa) render directly without dashboard chrome
+  if (!isAuthenticated) {
+    return <>{children}</>;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
       {/* 1. SIDEBAR */}
@@ -126,15 +137,15 @@ export default function AdminLayout({
               Cambria Academic Ledger
             </span>
             <span className="text-slate-300">•</span>
-            <span className="text-xs text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-              RLS Default-Deny Active
+            <span className="text-xs text-slate-600 font-medium bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
+              Institutional Administration
             </span>
           </div>
 
           <div className="flex items-center gap-4 text-xs">
-            <Link href="/verify" target="_blank" className="text-cambria-academic hover:underline flex items-center gap-1 font-medium">
-              <ShieldCheck className="w-4 h-4" />
-              Test Public Verification
+            <Link href="/verify" target="_blank" className="text-cambria-academic hover:underline flex items-center gap-1.5 font-medium">
+              <span>Public Verification Portal</span>
+              <ExternalLink className="w-3.5 h-3.5" />
             </Link>
           </div>
         </header>

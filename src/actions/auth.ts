@@ -1,11 +1,11 @@
 "use server";
 
 import { z } from "zod";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getStaffUserByEmail } from "@/lib/db";
+import { getStaffUserByEmail, addAuditLog } from "@/lib/db";
 import { verifyPassword, decryptSecret } from "@/lib/crypto";
 import { verifyTotpToken } from "@/lib/totp";
 
@@ -18,7 +18,35 @@ const mfaSchema = z.object({
   code: z.string().regex(/^\d{6}$/, "MFA code must be exactly 6 digits"),
 });
 
+async function getSafeHeaders() {
+  try {
+    const headerStore = await headers();
+    const ip =
+      headerStore.get("x-forwarded-for")?.split(",")[0].trim() ||
+      headerStore.get("x-real-ip") ||
+      "127.0.0.1";
+    const userAgent = headerStore.get("user-agent") || undefined;
+    return { ip, userAgent };
+  } catch {
+    return { ip: "127.0.0.1", userAgent: undefined };
+  }
+}
+
+async function getSafeCookies() {
+  try {
+    return await cookies();
+  } catch {
+    return {
+      get: (_name: string) => undefined,
+      set: (_name: string, _value: string, _opts?: any) => {},
+      delete: (_name: string) => {},
+    } as any;
+  }
+}
+
 export async function loginAction(prevState: any, formData: FormData) {
+  const { ip, userAgent } = await getSafeHeaders();
+
   const email = (formData.get("email") as string)?.trim().toLowerCase();
   const password = formData.get("password") as string;
 
@@ -31,12 +59,22 @@ export async function loginAction(prevState: any, formData: FormData) {
     };
   }
 
-  // 2. Rate Limiting (5 attempts per 15 minutes)
-  const rateLimit = await checkRateLimit(email, "admin-login", 5, 900);
+  // 2. IP Rate Limiting (5 attempts per 5 minutes)
+  const rateLimit = await checkRateLimit(ip, "admin-login", 5, 300);
   if (!rateLimit.success) {
+    await addAuditLog({
+      entity_type: "auth",
+      entity_id: ip,
+      action: "login_throttled",
+      actor_email: email || "unknown",
+      reason: "Too many login attempts; IP temporarily locked",
+      ip_address: ip,
+      user_agent: userAgent,
+    });
+
     return {
       success: false,
-      error: "Too many login attempts. Your IP has been temporarily throttled.",
+      error: "Too many login attempts. Access is temporarily locked. Please wait 5 minutes.",
     };
   }
 
@@ -51,6 +89,16 @@ export async function loginAction(prevState: any, formData: FormData) {
       });
 
       if (error) {
+        await addAuditLog({
+          entity_type: "auth",
+          entity_id: email,
+          action: "login_failed",
+          actor_email: email,
+          reason: "Invalid staff credentials attempt (Supabase)",
+          ip_address: ip,
+          user_agent: userAgent,
+        });
+
         return {
           success: false,
           error: "Invalid staff credentials or unapproved account.",
@@ -62,15 +110,24 @@ export async function loginAction(prevState: any, formData: FormData) {
   } else {
     // Verified against real PostgreSQL staff_users table with salted scrypt hashing
     const staffUser = await getStaffUserByEmail(email);
-    if (!staffUser) {
-      return {
-        success: false,
-        error: "Invalid staff credentials or unapproved account.",
-      };
-    }
 
-    const isPasswordValid = verifyPassword(password, staffUser.password_hash);
-    if (!isPasswordValid) {
+    // Constant-time check pattern to avoid timing enumeration
+    const dummyHash =
+      "scrypt:00000000000000000000000000000000:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+    const hashToVerify = staffUser ? staffUser.password_hash : dummyHash;
+    const isPasswordValid = verifyPassword(password, hashToVerify);
+
+    if (!staffUser || !isPasswordValid) {
+      await addAuditLog({
+        entity_type: "auth",
+        entity_id: email,
+        action: "login_failed",
+        actor_email: email,
+        reason: "Invalid staff credentials attempt",
+        ip_address: ip,
+        user_agent: userAgent,
+      });
+
       return {
         success: false,
         error: "Invalid staff credentials or unapproved account.",
@@ -78,8 +135,18 @@ export async function loginAction(prevState: any, formData: FormData) {
     }
   }
 
-  // Password matched -> DO NOT grant access directly! Issue temporary MFA challenge session
-  const cookieStore = await cookies();
+  // Password matched -> Issue temporary MFA challenge session & audit log
+  await addAuditLog({
+    entity_type: "auth",
+    entity_id: email,
+    action: "password_authenticated",
+    actor_email: email,
+    reason: "Step 1 password authenticated; MFA challenge issued",
+    ip_address: ip,
+    user_agent: userAgent,
+  });
+
+  const cookieStore = await getSafeCookies();
   cookieStore.set(
     "cambria_mfa_pending",
     JSON.stringify({ email, timestamp: Date.now() }),
@@ -97,6 +164,8 @@ export async function loginAction(prevState: any, formData: FormData) {
 }
 
 export async function verifyMfaAction(prevState: any, formData: FormData) {
+  const { ip, userAgent } = await getSafeHeaders();
+
   const code = (formData.get("code") as string)?.trim();
   const validated = mfaSchema.safeParse({ code });
 
@@ -107,7 +176,7 @@ export async function verifyMfaAction(prevState: any, formData: FormData) {
     };
   }
 
-  const cookieStore = await cookies();
+  const cookieStore = await getSafeCookies();
   const pendingCookie = cookieStore.get("cambria_mfa_pending");
 
   if (!pendingCookie?.value) {
@@ -151,13 +220,33 @@ export async function verifyMfaAction(prevState: any, formData: FormData) {
   const isTotpValid = verifyTotpToken(code, plainSecret);
 
   if (!isTotpValid) {
+    await addAuditLog({
+      entity_type: "auth",
+      entity_id: staffUser.email,
+      action: "mfa_failed",
+      actor_email: staffUser.email,
+      reason: "Invalid or expired TOTP security code",
+      ip_address: ip,
+      user_agent: userAgent,
+    });
+
     return {
       success: false,
       error: "Invalid or expired TOTP verification code. Cryptographic verification rejected.",
     };
   }
 
-  // MFA verified successfully! Clear pending challenge and establish authenticated staff session
+  // MFA verified successfully! Clear pending challenge, record audit log, and establish session
+  await addAuditLog({
+    entity_type: "auth",
+    entity_id: staffUser.email,
+    action: "login_success",
+    actor_email: staffUser.email,
+    reason: "Two-factor authentication established successfully",
+    ip_address: ip,
+    user_agent: userAgent,
+  });
+
   cookieStore.delete("cambria_mfa_pending");
 
   cookieStore.set(
@@ -184,7 +273,7 @@ export async function verifyMfaAction(prevState: any, formData: FormData) {
 }
 
 export async function logoutAction() {
-  const cookieStore = await cookies();
+  const cookieStore = await getSafeCookies();
   cookieStore.delete("cambria_mfa_pending");
   cookieStore.delete("cambria_staff_session");
   cookieStore.delete("cambria_staff_mfa_verified");

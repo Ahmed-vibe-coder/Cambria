@@ -15,7 +15,7 @@ const navLinks = [
   { href: "/programs", label: "Programs" },
   { href: "/majors", label: "Majors" },
   { href: "/services", label: "Services" },
-  { href: "/team", label: "Faculty & Team" },
+  { href: "/team", label: "Team" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -30,25 +30,6 @@ export const Navbar: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-subtle">
-      {/* Top Academic Sub-bar */}
-      <div className="bg-cambria-deep text-white text-xs py-1.5 border-b border-white/10 hidden md:block">
-        <Container className="flex items-center justify-between">
-          <div className="flex items-center gap-4 text-slate-300">
-            <span>Official Institutional Portal</span>
-            <span className="text-[#C8A84E]">★</span>
-            <span>London Liaison & Transnational Academic Registry</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/admin/login"
-              className="text-slate-300 hover:text-white transition-colors text-xs font-medium"
-            >
-              Staff Portal Access
-            </Link>
-          </div>
-        </Container>
-      </div>
-
       {/* Main Navigation */}
       <Container className="flex items-center justify-between h-20">
         {/* Brand / Logo */}
@@ -74,7 +55,7 @@ export const Navbar: React.FC = () => {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "px-3.5 py-2 text-sm font-medium transition-colors rounded-[4px]",
+                  "px-3.5 py-2 text-sm font-medium transition-colors rounded-[4px] whitespace-nowrap",
                   isActive
                     ? "text-cambria-academic font-semibold bg-cambria-soft/60"
                     : "text-slate-600 hover:text-cambria-navy hover:bg-slate-50"
@@ -92,14 +73,14 @@ export const Navbar: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              className="border-cambria-navy/30 text-cambria-navy hover:bg-cambria-soft font-semibold gap-1.5"
+              className="border-cambria-navy/30 text-cambria-navy hover:bg-cambria-soft font-semibold gap-1.5 whitespace-nowrap"
             >
               <ShieldCheck className="w-4 h-4 text-cambria-academic" />
               Verify Credential
             </Button>
           </Link>
           <Link href="/programs">
-            <Button size="sm" className="gap-1.5 bg-cambria-navy hover:bg-cambria-academic">
+            <Button size="sm" className="gap-1.5 bg-cambria-navy hover:bg-cambria-academic whitespace-nowrap">
               Explore Programs
               <ArrowRight className="w-3.5 h-3.5" />
             </Button>
@@ -145,11 +126,6 @@ export const Navbar: React.FC = () => {
               <Button variant="outline" className="w-full justify-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-cambria-academic" />
                 Verify a Credential
-              </Button>
-            </Link>
-            <Link href="/admin/login" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant="secondary" className="w-full justify-center">
-                Staff Login
               </Button>
             </Link>
           </div>

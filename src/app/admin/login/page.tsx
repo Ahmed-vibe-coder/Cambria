@@ -6,7 +6,7 @@ import { CambriaSeal } from "@/components/ui/cambria-seal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ShieldCheck, Lock, AlertCircle, KeyRound, Info } from "lucide-react";
+import { ShieldCheck, Lock, AlertCircle, Info } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminLoginPage() {
@@ -68,22 +68,19 @@ export default function AdminLoginPage() {
                   name="email"
                   type="email"
                   required
-                  defaultValue="admin@cambria.edu"
                   placeholder="name@cambria.edu"
                   className="rounded-[4px] border-slate-300"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 flex justify-between">
-                  <span>Account Password</span>
-                  <span className="text-slate-400 font-normal">Min 8 characters</span>
+                <label className="text-xs font-semibold text-slate-700">
+                  Account Password
                 </label>
                 <Input
                   name="password"
                   type="password"
                   required
-                  defaultValue="AdminPass123!"
                   placeholder="••••••••••••"
                   className="rounded-[4px] border-slate-300"
                 />
@@ -100,20 +97,6 @@ export default function AdminLoginPage() {
                 </Button>
               </div>
             </form>
-
-            {/* Test Credentials Helper */}
-            <div className="mt-6 pt-4 border-t border-slate-100 bg-slate-50 -mx-6 -mb-6 p-4 rounded-b-[6px] text-xs text-slate-600 space-y-1">
-              <div className="flex items-center gap-1.5 font-semibold text-slate-700">
-                <KeyRound className="w-3.5 h-3.5 text-[#C8A84E]" />
-                <span>Local Staff Credentials</span>
-              </div>
-              <p className="font-mono text-[11px] text-slate-600">
-                Email: <span className="font-bold">admin@cambria.edu</span>
-              </p>
-              <p className="font-mono text-[11px] text-slate-600">
-                Password: <span className="font-bold">AdminPass123!</span>
-              </p>
-            </div>
           </CardContent>
         </Card>
 

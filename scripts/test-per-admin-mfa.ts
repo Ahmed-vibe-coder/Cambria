@@ -58,7 +58,7 @@ async function runPerAdminMfaTest() {
   const loginResA = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: adminA.email, password: "AdminPass123!" }),
+    body: JSON.stringify({ email: adminA.email, password: "jnHNd9gd7kx4D4G4NU91Kqx1vsUt9-KH#K9" }),
   });
   const loginDataA = await loginResA.json();
   const cookiesA = loginResA.headers.get("set-cookie") || "";

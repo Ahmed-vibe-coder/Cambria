@@ -246,7 +246,7 @@ async function runRealE2eSuite() {
     const res = await fetch(`${BASE_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "admin@cambria.edu", password: "AdminPass123!" }),
+      body: JSON.stringify({ email: "admin@cambria.edu", password: "jnHNd9gd7kx4D4G4NU91Kqx1vsUt9-KH#K9" }),
     });
 
     const data = await res.json();

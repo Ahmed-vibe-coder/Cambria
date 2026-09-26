@@ -115,11 +115,6 @@ export const Footer: React.FC = () => {
                   Faculty Council
                 </Link>
               </li>
-              <li>
-                <Link href="/admin/login" className="hover:text-white transition-colors text-slate-400">
-                  Staff Login (MFA)
-                </Link>
-              </li>
             </ul>
           </div>
 

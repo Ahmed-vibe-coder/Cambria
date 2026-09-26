@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { CambriaSeal } from "@/components/ui/cambria-seal";
 import {
   getAccountTotpQrCodeDataUri,
-  generateTotpToken,
   generatePerAccountSecret,
 } from "@/lib/totp";
 import { getStaffUserByEmail, updateStaffUserMfa } from "@/lib/db";
@@ -52,7 +51,6 @@ export default async function AdminMfaPage() {
   }
 
   const qrDataUri = await getAccountTotpQrCodeDataUri(staffUser.email, plainSecret);
-  const currentToken = generateTotpToken(plainSecret);
 
   return (
     <div className="min-h-screen bg-cambria-deep flex flex-col justify-center items-center p-4 relative overflow-hidden">
@@ -104,22 +102,23 @@ export default async function AdminMfaPage() {
               </span>
             </div>
 
-            <div className="space-y-2 text-[11px] text-slate-600">
-              <div>
-                <span className="font-semibold text-slate-800 block">Unique Account Secret:</span>
-                <code className="font-mono bg-slate-100 px-2 py-0.5 rounded text-cambria-navy block break-all text-[10px]">
+            <div className="space-y-3 text-[11px] text-slate-600">
+              <div className="space-y-1">
+                <span className="font-semibold text-slate-800 block">Manual Configuration Key:</span>
+                <code className="font-mono bg-slate-100 p-2 rounded text-cambria-navy block break-all text-xs tracking-wider border border-slate-200">
                   {plainSecret}
                 </code>
+                <span className="text-[10px] text-slate-400 block">
+                  Enter this key manually if your device camera cannot scan the QR code.
+                </span>
               </div>
 
-              <div>
-                <span className="font-semibold text-slate-800 block">Current Cryptographic TOTP Code:</span>
-                <span className="font-mono text-base font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200 inline-block tracking-widest">
-                  {currentToken}
-                </span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">
-                  (Changes every 30 seconds per RFC 6238)
-                </span>
+              <div className="p-2.5 bg-blue-50/60 rounded border border-blue-100 text-[11px] text-slate-700 space-y-1">
+                <strong className="block text-cambria-navy">Verification Instructions:</strong>
+                <p>
+                  1. Scan the QR code or enter the key in your authenticator app.<br />
+                  2. Enter the current 6-digit code shown on your device above.
+                </p>
               </div>
             </div>
           </div>

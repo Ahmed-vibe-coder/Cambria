@@ -21,12 +21,14 @@ async function applyStaffMigration() {
   console.log("\nSeeding administrative accounts with per-user salted passwords and encrypted MFA secrets...");
 
   // Admin 1: Chief Registrar (admin@cambria.edu)
-  const admin1PasswordHash = hashPassword("AdminPass123!");
+  const admin1Pass = process.env.INITIAL_ADMIN_PASSWORD || "jnHNd9gd7kx4D4G4NU91Kqx1vsUt9-KH#K9";
+  const admin1PasswordHash = hashPassword(admin1Pass);
   const admin1Secret = generateSecret();
   const admin1EncryptedSecret = encryptSecret(admin1Secret);
 
   // Admin 2: Compliance Officer (compliance@cambria.edu)
-  const admin2PasswordHash = hashPassword("CompliancePass456!");
+  const admin2Pass = process.env.INITIAL_COMPLIANCE_PASSWORD || "WTdWEKpWMITwfgHeOm_3oBxOcB_1t0-v";
+  const admin2PasswordHash = hashPassword(admin2Pass);
   const admin2Secret = generateSecret();
   const admin2EncryptedSecret = encryptSecret(admin2Secret);
 

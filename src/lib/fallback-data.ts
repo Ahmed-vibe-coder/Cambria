@@ -458,9 +458,9 @@ export const FALLBACK_STAFF_USERS: StaffUser[] = [
     full_name: "Chief Registrar",
     role: "super_admin",
     password_hash:
-      "scrypt:3686e1d838c8ae668fc4acbe869513a2:407fb0b14a9b59dcff05597eb329460fd66fd9f109fb86ac8ade486208037b715396499d572fbe22533fbf13811d64e636f2abcf7627f3be8ff5d84607ca7234",
+      "scrypt:5f7cbbeac1846169389fcda6d47f5ffc:6031722dc99b0b75239dd3e567b4dace1c620767517facd63734f2541454a5aa797d0ea42c2e70bac66bd0aa266cca4302bac9f2504aa40f2a5ab74d628b978f",
     mfa_secret:
-      "aes256gcm:f3df42d1ae76153ce280084a:64cca6e5803170fe7e93e99c80b03b56:60c7bfaa1df3595f1c4ea694f5f6eb9a99aa4886552f57c6d7e22f6098e8ddcc",
+      "aes256gcm:a1e471d5a77a0af7b4ab174a:c20999cc652c7d3bf8b2334446403d08:8efded2f41b67fa4f90fad7eb9a47c60d6abf98020af98736243b113172adb1a",
     mfa_enrolled: true,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
@@ -471,9 +471,9 @@ export const FALLBACK_STAFF_USERS: StaffUser[] = [
     full_name: "Compliance Officer",
     role: "compliance",
     password_hash:
-      "scrypt:365eddac0687b776551d9a9be119ded8:edda90291c2337d006d1851f0e6dbc3af3191347014ba2721d06d5e9438194fa86a511d5fa01122be1426de67434be18152f4c22d2bb8e7265961068fe22dfd6",
+      "scrypt:acf81017f8261e193b72b05db8e7ea37:fce1d3e3de3849f8e38b694d24fc60ebe70d03ca4ba38bbf14a3e1cee9e5d075b8b3df7383baf7bfda114d4e1ff89836b0c502d7881be54d2a991a634afc56f4",
     mfa_secret:
-      "aes256gcm:99440225df3a7e228720ae3f:cc958b6553f9fb865a0e0bbfd77e919b:034844678e2803d9d9035d1e881272fe9e6dedb84b44c3ed08fc5e9a07fe57b1",
+      "aes256gcm:98cc1ad4a4fa3400abf47072:cc8f5dcac963c0873597bd10e069c66e:74bf9d87b5500f272597b54ab4f3d3dd6a40a221d5c237203c6e4b9edcef1906",
     mfa_enrolled: true,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
