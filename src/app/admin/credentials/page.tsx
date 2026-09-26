@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatDate } from "@/lib/utils";
 import { Award, PlusCircle, ExternalLink, FileText, CreditCard } from "lucide-react";
+import { deleteCredentialAction } from "@/actions/credentials";
+import { DeleteButton } from "@/components/admin/delete-button";
 
 export default async function AdminCredentialsPage() {
   const credentials = await getCredentials();
@@ -104,6 +106,13 @@ export default async function AdminCredentialsPage() {
                               Manage
                             </Button>
                           </Link>
+                          <DeleteButton
+                            id={cred.id}
+                            action={deleteCredentialAction}
+                            entityName="Credential"
+                            itemName={`${cred.credential_number} (${cred.student?.full_name_en || ""})`}
+                            variant="icon"
+                          />
                         </div>
                       </td>
                     </tr>

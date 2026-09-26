@@ -4,27 +4,13 @@ import { CambriaSeal } from "@/components/ui/cambria-seal";
 import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/actions/auth";
 import { cookies } from "next/headers";
+import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav";
 import {
-  LayoutDashboard,
-  Users,
-  GraduationCap,
-  Award,
-  FileText,
-  History,
   LogOut,
   ShieldCheck,
   PlusCircle,
   ExternalLink,
 } from "lucide-react";
-
-const sidebarLinks = [
-  { href: "/admin", label: "Dashboard Overview", icon: LayoutDashboard },
-  { href: "/admin/credentials", label: "Credentials Registry", icon: Award },
-  { href: "/admin/students", label: "Students Directory", icon: Users },
-  { href: "/admin/programs", label: "Academic Programs", icon: GraduationCap },
-  { href: "/admin/documents", label: "Document Gallery", icon: FileText },
-  { href: "/admin/audit-logs", label: "System Audit Trail", icon: History },
-];
 
 export const dynamic = "force-dynamic";
 
@@ -72,21 +58,7 @@ export default async function AdminLayout({
           </div>
 
           {/* Navigation Links */}
-          <nav className="p-4 space-y-1">
-            {sidebarLinks.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-[4px] text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
-                >
-                  <Icon className="w-4 h-4 text-[#C8A84E] shrink-0" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
+          <AdminSidebarNav />
         </div>
 
         {/* User Profile & Logout */}

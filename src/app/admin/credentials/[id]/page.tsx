@@ -6,7 +6,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatDate } from "@/lib/utils";
-import { transitionStatusAction, regenerateDocumentAction } from "@/actions/credentials";
+import { transitionStatusAction, regenerateDocumentAction, deleteCredentialAction } from "@/actions/credentials";
+import { DeleteButton } from "@/components/admin/delete-button";
 import {
   ArrowLeft,
   Award,
@@ -54,6 +55,14 @@ export default async function CredentialDetailPage({ params }: CredentialDetailP
         </div>
 
         <div className="flex items-center gap-3">
+          <DeleteButton
+            id={credential.id}
+            action={deleteCredentialAction}
+            entityName="Credential"
+            itemName={`${credential.credential_number} (${credential.program?.name || ""})`}
+            variant="full"
+            redirectTo="/admin/credentials"
+          />
           <Link href={`/verify/${credential.verification_token}`} target="_blank">
             <Button variant="outline" size="sm" className="gap-1.5 text-xs border-slate-300">
               <ExternalLink className="w-3.5 h-3.5" />

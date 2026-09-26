@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { maskNationalId, formatDate } from "@/lib/utils";
 import { ArrowLeft, User, Award, PlusCircle, Calendar, Mail, Phone, Globe, Shield } from "lucide-react";
+import { deleteStudentAction } from "@/actions/students";
+import { DeleteButton } from "@/components/admin/delete-button";
 
 interface StudentDetailPageProps {
   params: Promise<{ id: string }>;
@@ -33,12 +35,22 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
           </Button>
         </Link>
 
-        <Link href={`/admin/credentials/new?student_id=${student.id}`}>
-          <Button size="sm" className="gap-1.5 bg-cambria-navy hover:bg-cambria-academic text-white">
-            <PlusCircle className="w-4 h-4" />
-            Issue Credential to Scholar
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <DeleteButton
+            id={student.id}
+            action={deleteStudentAction}
+            entityName="Student"
+            itemName={`${student.full_name_en} (${student.student_id_number})`}
+            variant="full"
+            redirectTo="/admin/students"
+          />
+          <Link href={`/admin/credentials/new?student_id=${student.id}`}>
+            <Button size="sm" className="gap-1.5 bg-cambria-navy hover:bg-cambria-academic text-white">
+              <PlusCircle className="w-4 h-4" />
+              Issue Credential to Scholar
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Student Profile Card */}

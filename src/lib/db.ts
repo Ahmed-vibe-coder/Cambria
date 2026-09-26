@@ -174,6 +174,35 @@ export async function createProgram(
   return newProgram;
 }
 
+export async function deleteProgram(id: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      await supabase.from("credentials").delete().eq("program_id", id);
+      const { error } = await supabase.from("programs").delete().eq("id", id);
+      if (!error) {
+        memoryPrograms = memoryPrograms.filter((p) => p.id !== id);
+        memoryCredentials = memoryCredentials.filter((c) => c.program_id !== id);
+        return true;
+      }
+    } catch (err) {
+      console.warn("[DB] Supabase deleteProgram failed:", err);
+    }
+  }
+
+  try {
+    await db.exec(`DELETE FROM credential_documents WHERE credential_id IN (SELECT id FROM credentials WHERE program_id = '${id}');`);
+    await db.exec(`DELETE FROM credentials WHERE program_id = '${id}';`);
+    await db.exec(`DELETE FROM programs WHERE id = '${id}';`);
+  } catch (err) {
+    console.warn("[DB] PGlite deleteProgram error:", err);
+  }
+
+  memoryPrograms = memoryPrograms.filter((p) => p.id !== id);
+  memoryCredentials = memoryCredentials.filter((c) => c.program_id !== id);
+  return true;
+}
+
 // ============================================================================
 // STUDENTS
 // ============================================================================
@@ -242,6 +271,35 @@ export async function createStudent(
 
   memoryStudents.unshift(newStudent);
   return newStudent;
+}
+
+export async function deleteStudent(id: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      await supabase.from("credentials").delete().eq("student_id", id);
+      const { error } = await supabase.from("students").delete().eq("id", id);
+      if (!error) {
+        memoryStudents = memoryStudents.filter((s) => s.id !== id);
+        memoryCredentials = memoryCredentials.filter((c) => c.student_id !== id);
+        return true;
+      }
+    } catch (err) {
+      console.warn("[DB] Supabase deleteStudent failed:", err);
+    }
+  }
+
+  try {
+    await db.exec(`DELETE FROM credential_documents WHERE credential_id IN (SELECT id FROM credentials WHERE student_id = '${id}');`);
+    await db.exec(`DELETE FROM credentials WHERE student_id = '${id}';`);
+    await db.exec(`DELETE FROM students WHERE id = '${id}';`);
+  } catch (err) {
+    console.warn("[DB] PGlite deleteStudent error:", err);
+  }
+
+  memoryStudents = memoryStudents.filter((s) => s.id !== id);
+  memoryCredentials = memoryCredentials.filter((c) => c.student_id !== id);
+  return true;
 }
 
 // ============================================================================
@@ -575,6 +633,32 @@ export async function transitionCredentialStatus(
   // Memory fallback
   Object.assign(current, updates);
   return current;
+}
+
+export async function deleteCredential(id: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      await supabase.from("credential_documents").delete().eq("credential_id", id);
+      const { error } = await supabase.from("credentials").delete().eq("id", id);
+      if (!error) {
+        memoryCredentials = memoryCredentials.filter((c) => c.id !== id);
+        return true;
+      }
+    } catch (err) {
+      console.warn("[DB] Supabase deleteCredential failed:", err);
+    }
+  }
+
+  try {
+    await db.exec(`DELETE FROM credential_documents WHERE credential_id = '${id}';`);
+    await db.exec(`DELETE FROM credentials WHERE id = '${id}';`);
+  } catch (err) {
+    console.warn("[DB] PGlite deleteCredential error:", err);
+  }
+
+  memoryCredentials = memoryCredentials.filter((c) => c.id !== id);
+  return true;
 }
 
 export async function saveDocumentVersion(

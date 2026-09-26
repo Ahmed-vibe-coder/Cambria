@@ -5,12 +5,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   createCredential,
+  deleteCredential,
   getCredentialById,
   transitionCredentialStatus,
   saveDocumentVersion,
   getTemplateByKind,
   getStudentById,
   getProgramById,
+  addAuditLog,
 } from "@/lib/db";
 import { CredentialStatus, DocumentType } from "@/types/database";
 
@@ -180,5 +182,28 @@ async function triggerRenderForDocument(
     }
   } catch (err) {
     console.error("Renderer background call failed:", err);
+  }
+}
+
+export async function deleteCredentialAction(formData: FormData) {
+  const id = formData.get("id") as string;
+  if (!id) return;
+
+  try {
+    await deleteCredential(id);
+
+    await addAuditLog({
+      entity_type: "credential",
+      entity_id: id,
+      action: "delete_credential",
+      actor_email: "admin@cambria.edu",
+      reason: `Permanently expunged credential (${id}) from academic ledger`,
+    });
+
+    revalidatePath("/admin/credentials");
+    revalidatePath("/admin");
+    revalidatePath("/verify");
+  } catch (err: any) {
+    console.error("deleteCredentialAction error:", err);
   }
 }

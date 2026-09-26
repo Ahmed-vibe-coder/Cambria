@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createStudent, addAuditLog } from "@/lib/db";
+import { createStudent, deleteStudent, addAuditLog } from "@/lib/db";
 
 const studentSchema = z.object({
   student_id_number: z.string().min(3, "Student ID number must be at least 3 characters"),
@@ -58,4 +58,26 @@ export async function createStudentAction(prevState: any, formData: FormData) {
   }
 
   redirect("/admin/students");
+}
+
+export async function deleteStudentAction(formData: FormData) {
+  const id = formData.get("id") as string;
+  if (!id) return;
+
+  try {
+    await deleteStudent(id);
+
+    await addAuditLog({
+      entity_type: "student",
+      entity_id: id,
+      action: "delete_student",
+      actor_email: "admin@cambria.edu",
+      reason: `Permanently removed student record (${id}) from ledger`,
+    });
+
+    revalidatePath("/admin/students");
+    revalidatePath("/admin");
+  } catch (err: any) {
+    console.error("deleteStudentAction error:", err);
+  }
 }

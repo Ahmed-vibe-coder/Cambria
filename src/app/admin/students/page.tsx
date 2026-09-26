@@ -5,6 +5,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { maskNationalId, formatDate } from "@/lib/utils";
 import { Users, UserPlus, Search, ArrowRight, Award } from "lucide-react";
+import { DeleteButton } from "@/components/admin/delete-button";
+import { deleteStudentAction } from "@/actions/students";
 
 export default async function AdminStudentsPage() {
   const [students, credentials] = await Promise.all([
@@ -81,11 +83,19 @@ export default async function AdminStudentsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Link href={`/admin/students/${stu.id}`}>
-                          <Button size="sm" variant="outline" className="text-xs h-7 px-2.5">
-                            Profile
-                          </Button>
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          <Link href={`/admin/students/${stu.id}`}>
+                            <Button size="sm" variant="outline" className="text-xs h-7 px-2.5">
+                              Profile
+                            </Button>
+                          </Link>
+                          <DeleteButton
+                            action={deleteStudentAction}
+                            id={stu.id}
+                            entityName="student record"
+                            itemName={`${stu.full_name_en} (${stu.student_id_number})`}
+                          />
+                        </div>
                       </td>
                     </tr>
                   );

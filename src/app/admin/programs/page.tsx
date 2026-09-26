@@ -4,6 +4,8 @@ import { getPrograms, getCredentials } from "@/lib/db";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, PlusCircle, Award } from "lucide-react";
+import { deleteProgramAction } from "@/actions/programs";
+import { DeleteButton } from "@/components/admin/delete-button";
 
 export default async function AdminProgramsPage() {
   const [programs, credentials] = await Promise.all([
@@ -50,6 +52,7 @@ export default async function AdminProgramsPage() {
                   <th className="px-6 py-3">Degree Level</th>
                   <th className="px-6 py-3">Duration & Credits</th>
                   <th className="px-6 py-3">Conferred</th>
+                  <th className="px-6 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -79,6 +82,15 @@ export default async function AdminProgramsPage() {
                           <Award className="w-3.5 h-3.5 text-[#C8A84E]" />
                           {issuedCount} Conferred
                         </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <DeleteButton
+                          id={p.id}
+                          action={deleteProgramAction}
+                          entityName="Program"
+                          itemName={`${p.name} (${p.code})`}
+                          variant="icon"
+                        />
                       </td>
                     </tr>
                   );

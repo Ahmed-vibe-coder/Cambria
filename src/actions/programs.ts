@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createProgram, addAuditLog } from "@/lib/db";
+import { createProgram, deleteProgram, addAuditLog } from "@/lib/db";
 
 const programSchema = z.object({
   code: z.string().min(2, "Program code must be at least 2 characters"),
@@ -64,4 +64,27 @@ export async function createProgramAction(prevState: any, formData: FormData) {
   }
 
   redirect("/admin/programs");
+}
+
+export async function deleteProgramAction(formData: FormData) {
+  const id = formData.get("id") as string;
+  if (!id) return;
+
+  try {
+    await deleteProgram(id);
+
+    await addAuditLog({
+      entity_type: "program",
+      entity_id: id,
+      action: "delete_program",
+      actor_email: "admin@cambria.edu",
+      reason: `Permanently removed academic program (${id}) and related course offerings`,
+    });
+
+    revalidatePath("/admin/programs");
+    revalidatePath("/programs");
+    revalidatePath("/admin");
+  } catch (err: any) {
+    console.error("deleteProgramAction error:", err);
+  }
 }
