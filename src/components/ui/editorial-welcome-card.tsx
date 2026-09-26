@@ -57,15 +57,15 @@ export const EditorialWelcomeCard: React.FC<EditorialWelcomeCardProps> = ({
           </div>
         </div>
 
-        {/* Right Overlapping Editorial Card with Gold Left Accent */}
+        {/* Right Overlapping Editorial Card with Restrained Border Discipline */}
         <div className="lg:col-span-7 lg:-ml-10 relative z-10">
-          <div className="bg-white border border-slate-200/90 rounded-[6px] shadow-card p-7 sm:p-10 border-l-4 border-l-[#C8A84E] space-y-5">
+          <div className="bg-white border border-slate-200/90 hover:border-[#C8A84E]/40 rounded-[6px] shadow-card p-7 sm:p-10 space-y-5">
             {/* Eyebrow & Subtitle */}
             <div className="space-y-1">
               <span className="text-xs uppercase tracking-[0.22em] font-semibold text-[#C8A84E] block">
                 {eyebrow}
               </span>
-              <span className="text-[11px] uppercase tracking-wider text-slate-400 font-medium block">
+              <span className="text-[11px] uppercase tracking-wider text-slate-500 font-medium block">
                 {subtitle}
               </span>
             </div>

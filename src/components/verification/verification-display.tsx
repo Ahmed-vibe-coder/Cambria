@@ -117,7 +117,7 @@ export const VerificationDisplay: React.FC<VerificationDisplayProps> = ({ data }
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Candidate Information */}
           <div className="space-y-4">
-            <span className="text-xs uppercase tracking-wider font-semibold text-slate-400 block border-b border-slate-100 pb-2">
+            <span className="text-xs uppercase tracking-wider font-semibold text-slate-500 block border-b border-slate-100 pb-2">
               Credential Holder
             </span>
             <div>
@@ -149,7 +149,7 @@ export const VerificationDisplay: React.FC<VerificationDisplayProps> = ({ data }
 
           {/* Institutional Identifier & Dates */}
           <div className="space-y-4">
-            <span className="text-xs uppercase tracking-wider font-semibold text-slate-400 block border-b border-slate-100 pb-2">
+            <span className="text-xs uppercase tracking-wider font-semibold text-slate-500 block border-b border-slate-100 pb-2">
               Verification Metadata
             </span>
             <div>
@@ -237,7 +237,7 @@ export const VerificationDisplay: React.FC<VerificationDisplayProps> = ({ data }
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1.5 border-slate-300 hover:border-cambria-navy"
+                        className="gap-1.5 h-9 sm:h-8 px-3.5 border-slate-300 hover:border-cambria-navy"
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span>Download</span>

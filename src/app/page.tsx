@@ -352,14 +352,14 @@ export default async function HomePage() {
                 Admissions for upcoming cohort intakes are managed directly through the Registrar Liaison Office.
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Link href="/contact">
-                <Button className="bg-[#C8A84E] text-cambria-deep hover:bg-[#B89840] font-semibold text-xs px-5 py-2.5">
+                <Button className="bg-[#C8A84E] text-cambria-deep hover:bg-[#B89840] font-semibold text-xs sm:text-sm h-11 sm:h-10 px-5">
                   Registrar Direct Inquiry
                 </Button>
               </Link>
               <Link href="/programs">
-                <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 text-xs px-5 py-2.5">
+                <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 text-xs sm:text-sm h-11 sm:h-10 px-5">
                   View Curricula
                 </Button>
               </Link>

@@ -96,7 +96,7 @@ export default function AboutPage() {
                     <h4 className="font-serif text-base font-bold text-cambria-navy">
                       Institutional Registry
                     </h4>
-                    <span className="text-[11px] text-slate-400 uppercase tracking-wider block">
+                    <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
                       Registrar Profile
                     </span>
                   </div>
@@ -104,25 +104,25 @@ export default function AboutPage() {
 
                 <div className="space-y-3 text-xs text-slate-600">
                   <div>
-                    <span className="block text-slate-400 font-medium">Headquarters Liaison:</span>
+                    <span className="block text-slate-500 font-medium">Headquarters Liaison:</span>
                     <span className="font-semibold text-slate-800">
                       London & International Transnational Operations
                     </span>
                   </div>
                   <div>
-                    <span className="block text-slate-400 font-medium">Credentialing Mechanism:</span>
+                    <span className="block text-slate-500 font-medium">Credentialing Mechanism:</span>
                     <span className="font-semibold text-slate-800">
                       CSPRNG Verification Token & Sequential Serials
                     </span>
                   </div>
                   <div>
-                    <span className="block text-slate-400 font-medium">Document Typologies:</span>
+                    <span className="block text-slate-500 font-medium">Document Typologies:</span>
                     <span className="font-semibold text-slate-800">
                       Official Certificates & Physical Student Cards
                     </span>
                   </div>
                   <div>
-                    <span className="block text-slate-400 font-medium">Bilingual Support:</span>
+                    <span className="block text-slate-500 font-medium">Bilingual Support:</span>
                     <span className="font-semibold text-slate-800">
                       English & Arabic (Dual-Script OpenType)
                     </span>

@@ -109,7 +109,7 @@ export const Navbar: React.FC = () => {
         {/* Mobile Hamburger Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="lg:hidden p-2 rounded-[4px] text-slate-700 hover:bg-slate-100 focus:outline-none"
+          className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[4px] text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cambria-navy"
           aria-label="Toggle navigation menu"
         >
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -129,7 +129,7 @@ export const Navbar: React.FC = () => {
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    "px-3 py-2 text-base font-medium rounded-[4px] transition-colors",
+                    "px-3 py-2.5 min-h-[44px] flex items-center text-base font-medium rounded-[4px] transition-colors",
                     isActive
                       ? "text-cambria-navy bg-cambria-soft font-semibold"
                       : "text-slate-600 hover:bg-slate-50"

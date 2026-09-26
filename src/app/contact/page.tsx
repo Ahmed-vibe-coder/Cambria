@@ -142,7 +142,7 @@ export default function ContactPage() {
                           <label className="text-xs font-semibold text-slate-700">
                             Inquiry Category
                           </label>
-                          <select className="flex h-10 w-full rounded-[4px] border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cambria-academic">
+                          <select className="flex h-11 sm:h-10 w-full rounded-[4px] border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cambria-academic">
                             <option>Program Admissions & Syllabi</option>
                             <option>Prior Learning Assessment (PLAR)</option>
                             <option>Transcript & Attestation Support</option>
@@ -154,7 +154,7 @@ export default function ContactPage() {
                           <label className="text-xs font-semibold text-slate-700">
                             Credential Number (if applicable)
                           </label>
-                          <Input placeholder="e.g. CAM-2026-000184" />
+                          <Input placeholder="e.g. CAM-2026-000184" className="h-11 sm:h-10" />
                         </div>
                       </div>
 
@@ -173,7 +173,7 @@ export default function ContactPage() {
                       <Button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-cambria-navy hover:bg-cambria-academic text-white font-semibold py-2.5"
+                        className="w-full h-11 bg-cambria-navy hover:bg-cambria-academic text-white font-semibold"
                       >
                         {loading ? "Transmitting to Registrar..." : "Dispatch Inquiry"}
                       </Button>

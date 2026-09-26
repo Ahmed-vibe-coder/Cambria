@@ -72,7 +72,7 @@ export const QuoteSection: React.FC = () => {
                 <span className="text-xs font-semibold text-[#C8A84E] block">
                   {item.sourceRole}
                 </span>
-                <span className="text-[11px] text-slate-400 block">
+                <span className="text-[11px] text-slate-500 block">
                   {item.sourceAffiliation}
                 </span>
               </div>
@@ -81,8 +81,8 @@ export const QuoteSection: React.FC = () => {
         </div>
 
         {/* Honest Content Pending Callout */}
-        <div className="mt-10 max-w-2xl mx-auto p-4 rounded-[6px] bg-slate-50 border border-slate-200 flex items-center gap-3 text-xs text-slate-500 justify-center text-center">
-          <Info className="w-4 h-4 text-slate-400 shrink-0" />
+        <div className="mt-10 max-w-2xl mx-auto p-4 rounded-[6px] bg-slate-50 border border-slate-200 flex items-center gap-3 text-xs text-slate-600 justify-center text-center">
+          <Info className="w-4 h-4 text-slate-500 shrink-0" />
           <span>
             <strong>Note on Student & Partner Testimonials:</strong> Cambria publishes only verified graduate testimonials following formal registrar privacy consent. Submissions currently in review.
           </span>
