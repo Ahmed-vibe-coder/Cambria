@@ -1,0 +1,147 @@
+import React from "react";
+import Link from "next/link";
+import { CambriaSeal } from "@/components/ui/cambria-seal";
+import { Button } from "@/components/ui/button";
+import { logoutAction } from "@/actions/auth";
+import {
+  LayoutDashboard,
+  Users,
+  GraduationCap,
+  Award,
+  FileText,
+  History,
+  LogOut,
+  ShieldCheck,
+  PlusCircle,
+  ExternalLink,
+} from "lucide-react";
+
+const sidebarLinks = [
+  { href: "/admin", label: "Dashboard Overview", icon: LayoutDashboard },
+  { href: "/admin/credentials", label: "Credentials Registry", icon: Award },
+  { href: "/admin/students", label: "Students Directory", icon: Users },
+  { href: "/admin/programs", label: "Academic Programs", icon: GraduationCap },
+  { href: "/admin/documents", label: "Document Gallery", icon: FileText },
+  { href: "/admin/audit-logs", label: "System Audit Trail", icon: History },
+];
+
+export const dynamic = "force-dynamic";
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+      {/* 1. SIDEBAR */}
+      <aside className="w-full md:w-64 bg-cambria-deep text-white flex-shrink-0 flex flex-col justify-between border-r border-white/10">
+        <div>
+          {/* Logo / Brand Header */}
+          <div className="p-6 border-b border-white/10 flex items-center gap-3">
+            <CambriaSeal size={40} variant="white" />
+            <div>
+              <span className="font-serif text-lg font-bold text-white block leading-none">
+                CAMBRIA
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.2em] text-[#C8A84E] font-semibold mt-0.5 block">
+                Staff Registry Admin
+              </span>
+            </div>
+          </div>
+
+          {/* Quick Action Button */}
+          <div className="p-4 border-b border-white/10">
+            <Link href="/admin/credentials/new">
+              <Button className="w-full bg-[#C8A84E] hover:bg-[#B89840] text-cambria-deep font-semibold text-xs py-2 gap-2 shadow-subtle justify-center">
+                <PlusCircle className="w-4 h-4" />
+                Issue New Credential
+              </Button>
+            </Link>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="p-4 space-y-1">
+            {sidebarLinks.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-[4px] text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <Icon className="w-4 h-4 text-[#C8A84E] shrink-0" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* User Profile & Logout */}
+        <div className="p-4 border-t border-white/10 space-y-3">
+          <div className="flex items-center justify-between text-xs text-slate-400">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Registry System Active</span>
+            </div>
+            <Link
+              href="/"
+              target="_blank"
+              className="hover:text-white flex items-center gap-1 text-[11px]"
+              title="View Public Site"
+            >
+              Public <ExternalLink className="w-3 h-3" />
+            </Link>
+          </div>
+
+          <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+            <div className="truncate pr-2">
+              <span className="block text-xs font-semibold text-white truncate">
+                Admin Staff Officer
+              </span>
+              <span className="text-[10px] text-slate-400 block truncate">
+                admin@cambria.edu
+              </span>
+            </div>
+            <form action={logoutAction}>
+              <button
+                type="submit"
+                className="p-1.5 rounded-[4px] text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                title="Sign out of Admin"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
+        </div>
+      </aside>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        {/* Top Header */}
+        <header className="h-16 bg-white border-b border-slate-200 px-6 sm:px-8 flex items-center justify-between shadow-subtle shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="text-xs uppercase tracking-wider font-semibold text-slate-500">
+              Cambria Academic Ledger
+            </span>
+            <span className="text-slate-300">•</span>
+            <span className="text-xs text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              RLS Default-Deny Active
+            </span>
+          </div>
+
+          <div className="flex items-center gap-4 text-xs">
+            <Link href="/verify" target="_blank" className="text-cambria-academic hover:underline flex items-center gap-1 font-medium">
+              <ShieldCheck className="w-4 h-4" />
+              Test Public Verification
+            </Link>
+          </div>
+        </header>
+
+        {/* Content Body */}
+        <main className="p-6 sm:p-8 flex-1">{children}</main>
+      </div>
+    </div>
+  );
+}

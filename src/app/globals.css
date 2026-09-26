@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Cambria Institutional Colors */
+  --primary-navy: #020b5a;
+  --deep-navy: #07133f;
+  --academic-blue: #243a8f;
+  --soft-blue: #eaf0ff;
+  --off-white: #f8f9fc;
+  --white: #ffffff;
+  --gold-accent: #c8a84e;
+  --gold-muted: #e2cca0;
+
+  /* shadcn CSS variables mapped to Cambria tokens */
+  --background: 220 33% 98%;      /* #F8F9FC */
+  --foreground: 234 96% 18%;      /* #020B5A */
+
+  --card: 0 0% 100%;              /* #FFFFFF */
+  --card-foreground: 234 96% 18%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 234 96% 18%;
+
+  --primary: 234 96% 18%;         /* #020B5A Primary Navy */
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 224 100% 96%;      /* #EAF0FF Soft Blue */
+  --secondary-foreground: 234 96% 18%;
+
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 46%;
+
+  --accent: 43 53% 55%;           /* #C8A84E Gold Accent */
+  --accent-foreground: 234 96% 18%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 220 13% 91%;          /* #E2E8F0 */
+  --input: 220 13% 91%;
+  --ring: 228 60% 35%;            /* #243A8F Academic Blue */
+
+  /* Strict radius floor: 6px default, 4px sm, 8px max. No large bubbles! */
+  --radius: 0.375rem;             /* 6px */
+}
+
+body {
+  background-color: var(--off-white);
+  color: var(--primary-navy);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-cormorant), Georgia, serif;
+}
+
+/* Custom Cambria Motif Classes */
+.cambria-double-line {
+  border-top: 1px solid rgba(2, 11, 90, 0.12);
+  border-bottom: 1px solid rgba(200, 168, 78, 0.4);
+  height: 4px;
+}
+
+.cambria-double-line-light {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid rgba(200, 168, 78, 0.5);
+  height: 4px;
+}
+
+.cambria-watermark {
+  background-image: radial-gradient(circle at center, rgba(2, 11, 90, 0.025) 0%, transparent 70%);
+}
+
+.cambria-gold-glow {
+  text-shadow: 0 0 1px rgba(200, 168, 78, 0.4);
+}
