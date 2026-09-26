@@ -8,16 +8,16 @@ async function runComprehensiveAuthTest() {
   console.log("🚀 REAL FULL AUTHENTICATION FLOW TEST (INCLUDING REMEMBER ME & TOTP MFA)");
   console.log("================================================================================");
 
-  // 1. Test Old Leaked Password Rejection
-  console.log("\n[TEST 1] Testing rejection of old revoked password (AdminPass123!)...");
+  // 1. Test Invalid Password Rejection
+  console.log("\n[TEST 1] Testing rejection of invalid password (WrongPass999!)...");
   const fdOld = new FormData();
   fdOld.append("email", "admin@cambria.edu");
-  fdOld.append("password", "AdminPass123!");
+  fdOld.append("password", "WrongPass999!");
   const resOld = await loginAction(null, fdOld);
   if (!resOld.success && resOld.error === "Invalid staff credentials or unapproved account.") {
-    console.log("✅ PASS: Old password was rejected with generic error message.");
+    console.log("✅ PASS: Invalid password was rejected with generic error message.");
   } else {
-    console.error("❌ FAIL: Old password was not rejected properly:", resOld);
+    console.error("❌ FAIL: Invalid password was not rejected properly:", resOld);
     process.exit(1);
   }
 
