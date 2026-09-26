@@ -11,6 +11,28 @@ import Link from "next/link";
 
 export default function AdminLoginPage() {
   const [state, formAction, isPending] = useActionState(loginAction, null);
+  const [email, setEmail] = React.useState("");
+  const [rememberMe, setRememberMe] = React.useState(false);
+
+  React.useEffect(() => {
+    try {
+      const savedEmail = localStorage.getItem("cambria_staff_remember_email");
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+      }
+    } catch {}
+  }, []);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    try {
+      if (rememberMe && email) {
+        localStorage.setItem("cambria_staff_remember_email", email);
+      } else {
+        localStorage.removeItem("cambria_staff_remember_email");
+      }
+    } catch {}
+  };
 
   return (
     <div className="min-h-screen bg-cambria-deep flex flex-col justify-center items-center p-4 relative overflow-hidden">
@@ -59,7 +81,7 @@ export default function AdminLoginPage() {
               </div>
             )}
 
-            <form action={formAction} className="space-y-4">
+            <form action={formAction} onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700">
                   Institutional Email
@@ -68,6 +90,8 @@ export default function AdminLoginPage() {
                   name="email"
                   type="email"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@cambria.edu"
                   className="rounded-[4px] border-slate-300"
                 />
@@ -84,6 +108,26 @@ export default function AdminLoginPage() {
                   placeholder="••••••••••••"
                   className="rounded-[4px] border-slate-300"
                 />
+              </div>
+
+              {/* Remember Me Checkbox */}
+              <div className="flex items-center justify-between pt-0.5">
+                <label className="flex items-center gap-2 cursor-pointer select-none group">
+                  <input
+                    type="checkbox"
+                    name="rememberMe"
+                    value="true"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-cambria-navy focus:ring-cambria-academic accent-cambria-navy cursor-pointer transition-colors"
+                  />
+                  <span className="text-xs text-slate-600 group-hover:text-slate-900 transition-colors font-medium">
+                    Remember me / تذكر هذا الجهاز
+                  </span>
+                </label>
+                <span className="text-[11px] text-slate-400">
+                  30-day session
+                </span>
               </div>
 
               <div className="pt-2">

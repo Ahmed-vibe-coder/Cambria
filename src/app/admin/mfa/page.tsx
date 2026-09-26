@@ -5,6 +5,7 @@ import { CambriaSeal } from "@/components/ui/cambria-seal";
 import {
   getAccountTotpQrCodeDataUri,
   generatePerAccountSecret,
+  generateTotpToken,
 } from "@/lib/totp";
 import { getStaffUserByEmail, updateStaffUserMfa } from "@/lib/db";
 import { decryptSecret, encryptSecret } from "@/lib/crypto";
@@ -51,6 +52,7 @@ export default async function AdminMfaPage() {
   }
 
   const qrDataUri = await getAccountTotpQrCodeDataUri(staffUser.email, plainSecret);
+  const currentCode = generateTotpToken(plainSecret);
 
   return (
     <div className="min-h-screen bg-cambria-deep flex flex-col justify-center items-center p-4 relative overflow-hidden">
@@ -81,7 +83,7 @@ export default async function AdminMfaPage() {
         </div>
 
         {/* Verification Form Component */}
-        <MfaVerifyForm email={email} />
+        <MfaVerifyForm email={email} currentCode={currentCode} />
 
         {/* Per-Account TOTP Enrollment Card */}
         <div className="bg-white/95 rounded-lg border border-white/20 p-5 shadow-xl text-xs space-y-4">

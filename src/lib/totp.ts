@@ -24,7 +24,7 @@ export function verifyTotpToken(token: string, secret: string): boolean {
   const clean = token.trim();
   if (!/^\d{6}$/.test(clean)) return false;
   try {
-    const result = verifySync({ token: clean, secret });
+    const result = verifySync({ token: clean, secret, epochTolerance: 60 });
     return Boolean(result && result.valid);
   } catch {
     return false;

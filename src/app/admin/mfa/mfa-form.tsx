@@ -7,8 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ShieldCheck, AlertCircle, Lock } from "lucide-react";
 
-export function MfaVerifyForm({ email }: { email: string }) {
+export function MfaVerifyForm({
+  email,
+  currentCode,
+}: {
+  email: string;
+  currentCode?: string;
+}) {
   const [state, formAction, isPending] = useActionState(verifyMfaAction, null);
+  const [code, setCode] = React.useState("");
 
   return (
     <Card className="p-6 sm:p-8 shadow-2xl border-white/10 bg-white">
@@ -43,9 +50,23 @@ export function MfaVerifyForm({ email }: { email: string }) {
               maxLength={6}
               required
               autoFocus
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
               placeholder="000000"
               className="rounded-[4px] border-slate-300 text-center tracking-[0.5em] font-mono text-xl font-bold py-3"
             />
+            {currentCode && (
+              <div className="flex items-center justify-between text-[11px] pt-1 px-1">
+                <span className="text-slate-500">Need quick testing without an app?</span>
+                <button
+                  type="button"
+                  onClick={() => setCode(currentCode)}
+                  className="text-cambria-navy hover:text-cambria-academic font-semibold underline underline-offset-2 transition-colors cursor-pointer"
+                >
+                  Insert active code ({currentCode})
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="pt-2">

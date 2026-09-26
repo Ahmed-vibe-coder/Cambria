@@ -115,10 +115,14 @@ export async function loginAction(prevState: any, formData: FormData) {
     user_agent: userAgent,
   });
 
+  const rememberMe =
+    formData.get("rememberMe") === "on" ||
+    formData.get("rememberMe") === "true";
+
   const cookieStore = await getSafeCookies();
   cookieStore.set(
     "cambria_mfa_pending",
-    JSON.stringify({ email, timestamp: Date.now() }),
+    JSON.stringify({ email, rememberMe, timestamp: Date.now() }),
     {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -155,7 +159,7 @@ export async function verifyMfaAction(prevState: any, formData: FormData) {
     };
   }
 
-  let pendingData: { email: string; timestamp: number };
+  let pendingData: { email: string; rememberMe?: boolean; timestamp: number };
   try {
     pendingData = JSON.parse(pendingCookie.value);
   } catch {
@@ -218,15 +222,25 @@ export async function verifyMfaAction(prevState: any, formData: FormData) {
 
   cookieStore.delete("cambria_mfa_pending");
 
+  const isRemembered = Boolean(pendingData.rememberMe);
+  const sessionMaxAge = isRemembered
+    ? 60 * 60 * 24 * 30 // 30 days
+    : 60 * 60 * 12; // 12 hours
+
   cookieStore.set(
     "cambria_staff_session",
-    JSON.stringify({ email: staffUser.email, role: staffUser.role, timestamp: Date.now() }),
+    JSON.stringify({
+      email: staffUser.email,
+      role: staffUser.role,
+      rememberMe: isRemembered,
+      timestamp: Date.now(),
+    }),
     {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 12, // 12 hours
+      maxAge: sessionMaxAge,
     }
   );
 
@@ -235,7 +249,7 @@ export async function verifyMfaAction(prevState: any, formData: FormData) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 12,
+    maxAge: sessionMaxAge,
   });
 
   redirect("/admin");
