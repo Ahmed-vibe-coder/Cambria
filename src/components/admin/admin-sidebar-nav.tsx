@@ -11,6 +11,7 @@ import {
   Award,
   FileText,
   History,
+  ShieldCheck,
 } from "lucide-react";
 
 interface NavItem {
@@ -26,6 +27,7 @@ const sidebarLinks: NavItem[] = [
   { href: "/admin/programs", label: "Academic Programs", icon: GraduationCap },
   { href: "/admin/documents", label: "Document Gallery", icon: FileText },
   { href: "/admin/audit-logs", label: "System Audit Trail", icon: History },
+  { href: "/admin/settings", label: "Security & Devices", icon: ShieldCheck },
 ];
 
 export function AdminSidebarNav() {

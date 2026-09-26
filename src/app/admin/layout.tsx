@@ -87,15 +87,24 @@ export default async function AdminLayout({
                 admin@cambria.edu
               </span>
             </div>
-            <form action={logoutAction}>
-              <button
-                type="submit"
+            <div className="flex items-center gap-1">
+              <Link
+                href="/admin/settings"
                 className="p-1.5 rounded-[4px] text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-                title="Sign out of Admin"
+                title="Account Security & Trusted Devices"
               >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </form>
+                <ShieldCheck className="w-4 h-4" />
+              </Link>
+              <form action={logoutAction}>
+                <button
+                  type="submit"
+                  className="p-1.5 rounded-[4px] text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                  title="Sign out of Admin"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </aside>

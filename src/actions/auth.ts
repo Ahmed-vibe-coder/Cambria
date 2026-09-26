@@ -1,14 +1,25 @@
 "use server";
 
+import crypto from "crypto";
 import { z } from "zod";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getStaffUserByEmail, addAuditLog } from "@/lib/db";
+import {
+  getStaffUserByEmail,
+  addAuditLog,
+  verifyTrustedDevice,
+  createTrustedDevice,
+  revokeTrustedDevice,
+  revokeAllTrustedDevices,
+  updateStaffUserMfa,
+} from "@/lib/db";
 import { verifyPassword, hashPassword, decryptSecret } from "@/lib/crypto";
-import { verifyTotpToken, generateTotpToken } from "@/lib/totp";
+import { verifyTotpToken } from "@/lib/totp";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { parseDeviceName } from "@/lib/device-helper";
 
 const loginSchema = z.object({
   email: z.string().email("Please provide a valid institutional email address"),
@@ -79,7 +90,7 @@ export async function loginAction(prevState: any, formData: FormData) {
     };
   }
 
-  // 3. Look up administrative staff user from database (Supabase staff_users table or fallback)
+  // 3. Look up administrative staff user from database
   const staffUser = await getStaffUserByEmail(email);
 
   // Constant-time check pattern to avoid timing enumeration
@@ -120,22 +131,81 @@ export async function loginAction(prevState: any, formData: FormData) {
     }
   } catch {}
 
-  // Password matched -> Issue temporary MFA challenge session & audit log
+  const cookieStore = await getSafeCookies();
+  const rememberMe =
+    formData.get("rememberMe") === "on" ||
+    formData.get("rememberMe") === "true";
+
+  // 4. CHECK TRUSTED DEVICE COOKIE (30-Day Device Trust Flow)
+  const trustedCookie = cookieStore.get("cambria_trusted_device");
+  let isDeviceTrusted = false;
+
+  if (trustedCookie?.value) {
+    try {
+      const parsed = JSON.parse(trustedCookie.value);
+      if (parsed.email === staffUser.email && parsed.token) {
+        isDeviceTrusted = await verifyTrustedDevice(staffUser.email, parsed.token);
+      }
+    } catch {}
+  }
+
+  if (isDeviceTrusted) {
+    // Trusted device bypass: skip MFA challenge completely!
+    await addAuditLog({
+      entity_type: "auth",
+      entity_id: staffUser.email,
+      action: "login_trusted_device",
+      actor_email: staffUser.email,
+      reason: "MFA challenge bypassed via valid 30-day trusted device token",
+      ip_address: ip,
+      user_agent: userAgent,
+    });
+
+    const sessionMaxAge = rememberMe
+      ? 60 * 60 * 24 * 30 // 30 days
+      : 60 * 60 * 12; // 12 hours
+
+    cookieStore.delete("cambria_mfa_pending");
+
+    cookieStore.set(
+      "cambria_staff_session",
+      JSON.stringify({
+        email: staffUser.email,
+        role: staffUser.role,
+        rememberMe,
+        timestamp: Date.now(),
+      }),
+      {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: sessionMaxAge,
+      }
+    );
+
+    cookieStore.set("cambria_staff_mfa_verified", "true", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: sessionMaxAge,
+    });
+
+    redirect("/admin");
+  }
+
+  // Untrusted or unrecognized device: require MFA TOTP challenge step
   await addAuditLog({
     entity_type: "auth",
     entity_id: email,
     action: "password_authenticated",
     actor_email: email,
-    reason: "Step 1 password authenticated; MFA challenge issued",
+    reason: "Step 1 password authenticated; MFA challenge issued (unrecognized device)",
     ip_address: ip,
     user_agent: userAgent,
   });
 
-  const rememberMe =
-    formData.get("rememberMe") === "on" ||
-    formData.get("rememberMe") === "true";
-
-  const cookieStore = await getSafeCookies();
   cookieStore.set(
     "cambria_mfa_pending",
     JSON.stringify({ email, rememberMe, timestamp: Date.now() }),
@@ -148,7 +218,7 @@ export async function loginAction(prevState: any, formData: FormData) {
     }
   );
 
-  // Strictly redirect to MFA challenge verification step
+  // Redirect to MFA challenge verification step
   redirect("/admin/mfa");
 }
 
@@ -185,7 +255,7 @@ export async function verifyMfaAction(prevState: any, formData: FormData) {
     };
   }
 
-  // 1. Look up specific admin user from PostgreSQL database
+  // 1. Look up admin user from database
   const staffUser = await getStaffUserByEmail(pendingData.email);
   if (!staffUser || !staffUser.mfa_secret) {
     return {
@@ -199,13 +269,14 @@ export async function verifyMfaAction(prevState: any, formData: FormData) {
   try {
     plainSecret = decryptSecret(staffUser.mfa_secret);
   } catch {
-    plainSecret = "IEWMZ3CQJKXRXHROIO4BFD2Y2H2P3IHM";
+    return {
+      success: false,
+      error: "Failed to decrypt account MFA credentials.",
+    };
   }
 
-  // 3. REAL CRYPTOGRAPHIC TOTP TIME-BASED VERIFICATION against account-specific secret
-  const isTotpValid =
-    verifyTotpToken(code, plainSecret) ||
-    code === generateTotpToken(plainSecret);
+  // 3. STRICT CRYPTOGRAPHIC TOTP TIME-BASED RFC 6238 VERIFICATION (ZERO BYPASS)
+  const isTotpValid = verifyTotpToken(code, plainSecret);
 
   if (!isTotpValid) {
     await addAuditLog({
@@ -220,17 +291,52 @@ export async function verifyMfaAction(prevState: any, formData: FormData) {
 
     return {
       success: false,
-      error: "Invalid or expired TOTP verification code. Cryptographic verification rejected.",
+      error: "Invalid or expired TOTP verification code. Verification rejected.",
     };
   }
 
-  // MFA verified successfully! Clear pending challenge, record audit log, and establish session
+  // Mark MFA enrolled on first successful code verification
+  if (!staffUser.mfa_enrolled) {
+    await updateStaffUserMfa(staffUser.email, staffUser.mfa_secret, true);
+  }
+
+  // 4. Handle "Trust this device for 30 days"
+  const trustDevice =
+    formData.get("trustDevice") === "on" ||
+    formData.get("trustDevice") === "true";
+
+  if (trustDevice) {
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const deviceName = parseDeviceName(userAgent);
+
+    await createTrustedDevice({
+      user_email: staffUser.email,
+      token: rawToken,
+      device_name: deviceName,
+      ip_address: ip,
+      days: 30,
+    });
+
+    cookieStore.set(
+      "cambria_trusted_device",
+      JSON.stringify({ email: staffUser.email, token: rawToken }),
+      {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+      }
+    );
+  }
+
+  // MFA verified successfully! Record audit log and establish session
   await addAuditLog({
     entity_type: "auth",
     entity_id: staffUser.email,
     action: "login_success",
     actor_email: staffUser.email,
-    reason: "Two-factor authentication established successfully",
+    reason: `Two-factor authentication established successfully${trustDevice ? " (device trusted for 30 days)" : ""}`,
     ip_address: ip,
     user_agent: userAgent,
   });
@@ -268,6 +374,56 @@ export async function verifyMfaAction(prevState: any, formData: FormData) {
   });
 
   redirect("/admin");
+}
+
+export async function revokeTrustedDeviceAction(formData: FormData) {
+  const deviceId = formData.get("deviceId") as string;
+  if (!deviceId) return;
+
+  const cookieStore = await getSafeCookies();
+  const sessionCookie = cookieStore.get("cambria_staff_session");
+  let userEmail = "admin@cambria.edu";
+  if (sessionCookie?.value) {
+    try {
+      userEmail = JSON.parse(sessionCookie.value).email || userEmail;
+    } catch {}
+  }
+
+  await revokeTrustedDevice(deviceId, userEmail);
+
+  await addAuditLog({
+    entity_type: "auth",
+    entity_id: deviceId,
+    action: "device_revoked",
+    actor_email: userEmail,
+    reason: `Admin revoked trusted device (${deviceId})`,
+  });
+
+  revalidatePath("/admin/settings");
+}
+
+export async function revokeAllTrustedDevicesAction() {
+  const cookieStore = await getSafeCookies();
+  const sessionCookie = cookieStore.get("cambria_staff_session");
+  let userEmail = "admin@cambria.edu";
+  if (sessionCookie?.value) {
+    try {
+      userEmail = JSON.parse(sessionCookie.value).email || userEmail;
+    } catch {}
+  }
+
+  await revokeAllTrustedDevices(userEmail);
+  cookieStore.delete("cambria_trusted_device");
+
+  await addAuditLog({
+    entity_type: "auth",
+    entity_id: userEmail,
+    action: "all_devices_revoked",
+    actor_email: userEmail,
+    reason: "Admin revoked all trusted devices for account",
+  });
+
+  revalidatePath("/admin/settings");
 }
 
 export async function logoutAction() {

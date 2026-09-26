@@ -1,13 +1,27 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getStaffUserByEmail } from "@/lib/db";
+import {
+  getStaffUserByEmail,
+  addAuditLog,
+  createTrustedDevice,
+  updateStaffUserMfa,
+} from "@/lib/db";
 import { decryptSecret } from "@/lib/crypto";
 import { verifyTotpToken } from "@/lib/totp";
+import { parseDeviceName } from "@/lib/device-helper";
 
 export async function POST(req: NextRequest) {
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+    req.headers.get("x-real-ip") ||
+    "127.0.0.1";
+  const userAgent = req.headers.get("user-agent") || undefined;
+
   const body = await req.json().catch(() => ({}));
   const code = (body.code || "").trim();
   const explicitEmail = body.email ? body.email.trim().toLowerCase() : null;
+  const trustDevice = Boolean(body.trustDevice !== false); // default to true if not explicitly false
 
   const cookieStore = await cookies();
   const pendingCookie = cookieStore.get("cambria_mfa_pending");
@@ -27,7 +41,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 1. Fetch user from PostgreSQL
+  // 1. Fetch user from database
   const staffUser = await getStaffUserByEmail(email);
   if (!staffUser || !staffUser.mfa_secret) {
     return NextResponse.json(
@@ -51,13 +65,54 @@ export async function POST(req: NextRequest) {
   const isValid = verifyTotpToken(code, plainSecret);
 
   if (!isValid) {
+    await addAuditLog({
+      entity_type: "auth",
+      entity_id: staffUser.email,
+      action: "api_mfa_failed",
+      actor_email: staffUser.email,
+      reason: "Invalid or expired 6-digit TOTP security code",
+      ip_address: ip,
+      user_agent: userAgent,
+    });
+
     return NextResponse.json(
       { success: false, error: "Invalid or expired 6-digit TOTP security code." },
       { status: 401 }
     );
   }
 
-  // 4. Clear pending challenge and issue authorized session
+  // Mark enrolled on first successful code verification
+  if (!staffUser.mfa_enrolled) {
+    await updateStaffUserMfa(staffUser.email, staffUser.mfa_secret, true);
+  }
+
+  // 4. Handle "Trust this device"
+  if (trustDevice) {
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const deviceName = parseDeviceName(userAgent);
+
+    await createTrustedDevice({
+      user_email: staffUser.email,
+      token: rawToken,
+      device_name: deviceName,
+      ip_address: ip,
+      days: 30,
+    });
+
+    cookieStore.set(
+      "cambria_trusted_device",
+      JSON.stringify({ email: staffUser.email, token: rawToken }),
+      {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+      }
+    );
+  }
+
+  // 5. Clear pending challenge and issue authorized session
   cookieStore.delete("cambria_mfa_pending");
 
   cookieStore.set(
@@ -68,7 +123,7 @@ export async function POST(req: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 12,
+      maxAge: 60 * 60 * 24 * 30,
     }
   );
 
@@ -77,12 +132,23 @@ export async function POST(req: NextRequest) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 12,
+    maxAge: 60 * 60 * 24 * 30,
+  });
+
+  await addAuditLog({
+    entity_type: "auth",
+    entity_id: staffUser.email,
+    action: "api_login_success",
+    actor_email: staffUser.email,
+    reason: `API MFA verification completed successfully${trustDevice ? " (device trusted for 30 days)" : ""}`,
+    ip_address: ip,
+    user_agent: userAgent,
   });
 
   return NextResponse.json({
     success: true,
     redirectTo: "/admin",
+    trustedDevice: trustDevice,
     user: {
       email: staffUser.email,
       fullName: staffUser.full_name,

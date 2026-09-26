@@ -12,6 +12,7 @@ import {
   PublicVerificationResult,
   CredentialStatus,
   StaffUser,
+  TrustedDevice,
 } from "@/types/database";
 import { toPublicVerificationView } from "@/lib/serializers/public-verification";
 import { createServiceRoleClient } from "@/lib/supabase/service";
@@ -29,6 +30,7 @@ let memoryCredentials = [...FALLBACK_CREDENTIALS];
 let memoryStudents = [...FALLBACK_STUDENTS];
 let memoryPrograms = [...FALLBACK_PROGRAMS];
 let memoryAuditLogs = [...FALLBACK_AUDIT_LOGS];
+let memoryTrustedDevices: TrustedDevice[] = [];
 
 function getSupabase() {
   try {
@@ -868,30 +870,194 @@ export async function getStaffUserById(id: string): Promise<StaffUser | null> {
 }
 
 export async function updateStaffUserMfa(
-  id: string,
+  idOrEmail: string,
   mfaSecretEncrypted: string,
   mfaEnrolled: boolean
 ): Promise<void> {
   const supabase = getSupabase();
   if (supabase) {
     try {
-      await supabase
-        .from("staff_users")
-        .update({
-          mfa_secret: mfaSecretEncrypted,
-          mfa_enrolled: mfaEnrolled,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-      return;
+      const query = idOrEmail.includes("@")
+        ? supabase.from("staff_users").update({
+            mfa_secret: mfaSecretEncrypted,
+            mfa_enrolled: mfaEnrolled,
+            updated_at: new Date().toISOString(),
+          }).eq("email", idOrEmail.toLowerCase().trim())
+        : supabase.from("staff_users").update({
+            mfa_secret: mfaSecretEncrypted,
+            mfa_enrolled: mfaEnrolled,
+            updated_at: new Date().toISOString(),
+          }).eq("id", idOrEmail);
+      await query;
     } catch (err) {
       console.warn("[DB] Supabase updateStaffUserMfa error:", err);
     }
   }
 
-  const user = FALLBACK_STAFF_USERS.find((u) => u.id === id);
+  const user = FALLBACK_STAFF_USERS.find(
+    (u) => u.id === idOrEmail || u.email.toLowerCase() === idOrEmail.toLowerCase().trim()
+  );
   if (user) {
     user.mfa_secret = mfaSecretEncrypted;
     user.mfa_enrolled = mfaEnrolled;
   }
+
+  // Security: Invalidate all existing trusted devices when MFA configuration is changed or reset
+  const email = user ? user.email : idOrEmail.includes("@") ? idOrEmail : null;
+  if (email) {
+    await revokeAllTrustedDevices(email);
+  }
+}
+
+// ============================================================================
+// TRUSTED DEVICES MANAGEMENT (30-Day Device Trust Flow)
+// ============================================================================
+
+export async function createTrustedDevice(input: {
+  user_email: string;
+  token: string;
+  device_name: string;
+  ip_address?: string;
+  days?: number;
+}): Promise<TrustedDevice> {
+  const tokenHash = crypto.createHash("sha256").update(input.token).digest("hex");
+  const days = input.days || 30;
+  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+  const now = new Date().toISOString();
+
+  const device: TrustedDevice = {
+    id: crypto.randomUUID(),
+    user_email: input.user_email.toLowerCase().trim(),
+    token_hash: tokenHash,
+    device_name: input.device_name || "Unknown Browser / Device",
+    ip_address: input.ip_address || null,
+    is_revoked: false,
+    expires_at: expiresAt,
+    created_at: now,
+    updated_at: now,
+  };
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from("trusted_devices").insert(device).select().single();
+      if (!error && data) {
+        memoryTrustedDevices.unshift(data as TrustedDevice);
+        return data as TrustedDevice;
+      }
+    } catch (err) {
+      console.warn("[DB] Supabase createTrustedDevice error:", err);
+    }
+  }
+
+  memoryTrustedDevices.unshift(device);
+  return device;
+}
+
+export async function verifyTrustedDevice(
+  user_email: string,
+  token: string
+): Promise<boolean> {
+  if (!user_email || !token) return false;
+  const cleanEmail = user_email.toLowerCase().trim();
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const now = new Date().toISOString();
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("trusted_devices")
+        .select("*")
+        .eq("user_email", cleanEmail)
+        .eq("token_hash", tokenHash)
+        .eq("is_revoked", false)
+        .gt("expires_at", now)
+        .maybeSingle();
+      if (!error && data) return true;
+    } catch (err) {
+      console.warn("[DB] Supabase verifyTrustedDevice error:", err);
+    }
+  }
+
+  const found = memoryTrustedDevices.find(
+    (d) =>
+      d.user_email === cleanEmail &&
+      d.token_hash === tokenHash &&
+      !d.is_revoked &&
+      new Date(d.expires_at) > new Date()
+  );
+  return Boolean(found);
+}
+
+export async function getTrustedDevicesForUser(
+  user_email: string
+): Promise<TrustedDevice[]> {
+  const cleanEmail = user_email.toLowerCase().trim();
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("trusted_devices")
+        .select("*")
+        .eq("user_email", cleanEmail)
+        .order("created_at", { ascending: false });
+      if (!error && data) return data as TrustedDevice[];
+    } catch (err) {
+      console.warn("[DB] Supabase getTrustedDevicesForUser error:", err);
+    }
+  }
+
+  return memoryTrustedDevices.filter((d) => d.user_email === cleanEmail);
+}
+
+export async function revokeTrustedDevice(
+  id: string,
+  user_email: string
+): Promise<boolean> {
+  const cleanEmail = user_email.toLowerCase().trim();
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      await supabase
+        .from("trusted_devices")
+        .update({ is_revoked: true, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .eq("user_email", cleanEmail);
+    } catch (err) {
+      console.warn("[DB] Supabase revokeTrustedDevice error:", err);
+    }
+  }
+
+  const dev = memoryTrustedDevices.find((d) => d.id === id && d.user_email === cleanEmail);
+  if (dev) {
+    dev.is_revoked = true;
+    dev.updated_at = new Date().toISOString();
+  }
+  return true;
+}
+
+export async function revokeAllTrustedDevices(
+  user_email: string
+): Promise<boolean> {
+  const cleanEmail = user_email.toLowerCase().trim();
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      await supabase
+        .from("trusted_devices")
+        .update({ is_revoked: true, updated_at: new Date().toISOString() })
+        .eq("user_email", cleanEmail);
+    } catch (err) {
+      console.warn("[DB] Supabase revokeAllTrustedDevices error:", err);
+    }
+  }
+
+  for (const dev of memoryTrustedDevices) {
+    if (dev.user_email === cleanEmail) {
+      dev.is_revoked = true;
+      dev.updated_at = new Date().toISOString();
+    }
+  }
+  return true;
 }

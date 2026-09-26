@@ -460,7 +460,7 @@ export const FALLBACK_STAFF_USERS: StaffUser[] = [
     password_hash:
       "scrypt:86238233e17cae88ab529b682f7636d2:85eb0dfffcf5bea2deb8df68456b9e26c553b0a3054b135543b95a095468d6487b48bf95bed7f95203daa32b7850fc966ac2f2e081c0bc4374b6c7a2c333fee6",
     mfa_secret:
-      "aes256gcm:a2ac5c7f911d994523f09216:f5ac8aff686505ba8d78799967bda7d3:b1ad1ed3623ff0c460a0253956901814a437b4a78959a47f6df3848d023d20bd",
+      "aes256gcm:54a552355d5542cf1d6d0e1c:fdfaad6188f459bf145231cb10db64d1:eac7c79588ca4dbaec8803c7bb8afbd2423ebed6dc21af145f94b3c0b84c86f7",
     mfa_enrolled: true,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
@@ -473,7 +473,7 @@ export const FALLBACK_STAFF_USERS: StaffUser[] = [
     password_hash:
       "scrypt:31e641ce03c4eb14b226c40890f9c271:0f4689a8363b79ca274d452ccc4d29a07c700e5b2efef72042fcb99e3f20e1b7bd7e4e3408b482d202fbb6463680f461e8b8c50d992ddff1ccab9b5f4f9d0320",
     mfa_secret:
-      "aes256gcm:a84fae48760197d29c89b135:22f16bf5a1b2eb1863b05b8182b10895:7e44547519e8552f7e9c14b1bd2daacf773643a6ab7ff5b43c2119d2355c13d5",
+      "aes256gcm:58f22a3c961940999e8ea037:c03c7bafea6697092ca44bc0f9182106:8d0e6784e5f000ed0161911a7fbf0e3ed1f8f0207ee8da27ce561648bcf8cd30",
     mfa_enrolled: true,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",

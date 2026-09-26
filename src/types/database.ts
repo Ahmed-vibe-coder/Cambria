@@ -191,3 +191,15 @@ export interface StaffUser {
   updated_at: string;
 }
 
+export interface TrustedDevice {
+  id: string;
+  user_email: string;
+  token_hash: string;
+  device_name: string;
+  ip_address?: string | null;
+  expires_at: string;
+  is_revoked: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
