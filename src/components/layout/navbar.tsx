@@ -53,7 +53,7 @@ export const Navbar: React.FC = () => {
       <Container className="flex items-center justify-between h-20">
         {/* Brand / Logo */}
         <Link href="/" className="flex items-center gap-3.5 group">
-          <CambriaSeal size={48} variant="navy" className="transition-transform group-hover:scale-105" />
+          <CambriaSeal size={48} variant="navy" priority className="transition-transform group-hover:scale-105" />
           <div className="flex flex-col">
             <span className="font-serif text-2xl font-bold tracking-tight text-cambria-navy leading-none">
               CAMBRIA

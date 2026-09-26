@@ -1,16 +1,45 @@
 import React from "react";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 interface CambriaSealProps {
   className?: string;
   size?: number;
   variant?: "navy" | "white" | "gold" | "monochrome";
+  useSvg?: boolean;
+  priority?: boolean;
 }
 
 export const CambriaSeal: React.FC<CambriaSealProps> = ({
   className = "",
   size = 64,
   variant = "navy",
+  useSvg = false,
+  priority = false,
 }) => {
+  // If not explicitly requesting SVG and size is typical for visible UI logos (<= 250px),
+  // render the official high-resolution Cambria College circular emblem
+  if (!useSvg && size <= 250) {
+    return (
+      <div
+        className={cn(
+          "relative inline-flex items-center justify-center shrink-0 rounded-full overflow-hidden",
+          className
+        )}
+        style={{ width: size, height: size }}
+      >
+        <Image
+          src="/images/cambria-logo.png"
+          alt="Cambria International College Official Emblem"
+          width={size}
+          height={size}
+          priority={priority}
+          className="w-full h-full object-contain rounded-full select-none"
+        />
+      </div>
+    );
+  }
+
   const getColors = () => {
     switch (variant) {
       case "white":

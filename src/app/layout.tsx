@@ -38,7 +38,25 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Cambria International College" }],
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    apple: "/images/cambria-logo.png",
+    shortcut: "/favicon.png",
+  },
+  openGraph: {
+    title: "Cambria International College",
+    description:
+      "Transnational Education & Official Cryptographic Credential Verification Platform",
+    images: [
+      {
+        url: "/images/cambria-logo.png",
+        width: 500,
+        height: 500,
+        alt: "Cambria International College Official Emblem",
+      },
+    ],
   },
 };
 
