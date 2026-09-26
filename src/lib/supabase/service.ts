@@ -7,7 +7,8 @@ export function createServiceRoleClient() {
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    "dummy-service-key";
+    process.env.SUPABASE_ANON_KEY ||
+    "sb_publishable_mxH_8cFaK2265grsh7QHeA_VBM8FrYt";
 
   return createClient(supabaseUrl, serviceKey, {
     auth: {

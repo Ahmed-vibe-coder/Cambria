@@ -26,6 +26,9 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "https://cambria-five.vercel.app"
+  ),
   title: "Cambria International College | Transnational Education & Verification",
   description:
     "Official portal for Cambria International College. Offering distinguished executive education, professional diplomas, and instant cryptographic credential verification.",
