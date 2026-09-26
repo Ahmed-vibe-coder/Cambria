@@ -13,6 +13,8 @@ const buttonVariants = cva(
           "bg-rose-700 text-white hover:bg-rose-800 shadow-subtle",
         outline:
           "border border-slate-300 bg-white text-cambria-navy hover:bg-slate-50 hover:border-cambria-academic",
+        outlineDark:
+          "border border-white/30 bg-white/10 text-white hover:bg-white/20 hover:border-white shadow-subtle",
         secondary:
           "bg-cambria-soft text-cambria-navy hover:bg-blue-100",
         ghost: "hover:bg-slate-100 text-cambria-navy",

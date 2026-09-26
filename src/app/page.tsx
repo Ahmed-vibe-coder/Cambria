@@ -88,9 +88,9 @@ export default async function HomePage() {
                 </Link>
                 <Link href="/verify">
                   <Button
-                    variant="outline"
+                    variant="outlineDark"
                     size="lg"
-                    className="border-white/30 text-white bg-white/5 hover:bg-white/10 hover:border-white gap-2 font-medium"
+                    className="gap-2 font-medium"
                   >
                     <ShieldCheck className="w-4 h-4 text-[#C8A84E]" />
                     Verify a Credential
@@ -320,8 +320,8 @@ export default async function HomePage() {
                 </Link>
                 <Link href="/about">
                   <Button
-                    variant="outline"
-                    className="border-white/30 text-white bg-white/5 hover:bg-white/10 hover:border-white font-medium"
+                    variant="outlineDark"
+                    className="font-medium"
                   >
                     Read Governance Charter
                   </Button>
@@ -359,8 +359,12 @@ export default async function HomePage() {
                 </Button>
               </Link>
               <Link href="/programs">
-                <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 text-xs sm:text-sm h-11 sm:h-10 px-5">
+                <Button
+                  variant="outlineDark"
+                  className="font-semibold text-xs sm:text-sm h-11 sm:h-10 px-5 gap-1.5 border-white/40 hover:border-white transition-all"
+                >
                   View Curricula
+                  <ArrowRight className="w-3.5 h-3.5 text-[#C8A84E]" />
                 </Button>
               </Link>
             </div>
