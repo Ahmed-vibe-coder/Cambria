@@ -6,8 +6,9 @@ import { createCredentialAction } from "@/actions/credentials";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Award, ShieldCheck, AlertCircle, Info } from "lucide-react";
+import { ArrowLeft, Award, ShieldCheck, AlertCircle, Info, Sparkles } from "lucide-react";
 import { Student, Program, Template } from "@/types/database";
+import { TemplateVisualPicker } from "@/components/admin/template-visual-picker";
 
 export default function NewCredentialPage() {
   const [state, formAction, isPending] = useActionState(createCredentialAction, null);
@@ -15,6 +16,12 @@ export default function NewCredentialPage() {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Dynamic visual template selection states
+  const [selectedCertTemplateId, setSelectedCertTemplateId] = useState<string>("");
+  const [selectedCardTemplateId, setSelectedCardTemplateId] = useState<string>("");
+  const [generateCertificate, setGenerateCertificate] = useState<boolean>(true);
+  const [generateStudentCard, setGenerateStudentCard] = useState<boolean>(true);
 
   useEffect(() => {
     async function loadData() {
@@ -24,9 +31,21 @@ export default function NewCredentialPage() {
           fetch("/api/admin-data?type=programs").then((r) => r.json()),
           fetch("/api/admin-data?type=templates").then((r) => r.json()),
         ]);
+        const loadedTemplates: Template[] = resTemplates || [];
         setStudents(resStudents || []);
         setPrograms(resPrograms || []);
-        setTemplates(resTemplates || []);
+        setTemplates(loadedTemplates);
+
+        // Pre-select active default templates
+        const defaultCert =
+          loadedTemplates.find((t) => t.template_kind === "certificate" && t.is_active) ||
+          loadedTemplates.find((t) => t.template_kind === "certificate");
+        if (defaultCert) setSelectedCertTemplateId(defaultCert.id);
+
+        const defaultCard =
+          loadedTemplates.find((t) => t.template_kind === "student_card" && t.is_active) ||
+          loadedTemplates.find((t) => t.template_kind === "student_card");
+        if (defaultCard) setSelectedCardTemplateId(defaultCard.id);
       } catch {
         // Fallback handled gracefully
       } finally {
@@ -37,7 +56,7 @@ export default function NewCredentialPage() {
   }, []);
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-4xl space-y-6">
       <div className="flex items-center gap-3">
         <Link href="/admin/credentials">
           <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-slate-500">
@@ -52,8 +71,7 @@ export default function NewCredentialPage() {
           Issue New Academic Credential
         </h1>
         <p className="text-sm text-slate-500 pt-0.5">
-          Confer a verifiable credential to an enrolled scholar. Automatically prepares official
-          certificates and student identification cards.
+          Confer a verifiable credential to an enrolled scholar. Select visual certificate and student card designs with real-time previews.
         </p>
       </div>
 
@@ -168,81 +186,115 @@ export default function NewCredentialPage() {
               </div>
             </div>
 
-            {/* Document Generation Options */}
-            <div className="p-5 bg-slate-50 border border-slate-200 rounded-[6px] space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-wider font-semibold text-slate-700 block">
-                  Generate Official Documents
-                </span>
+            {/* Visual Document Generation Options */}
+            <div className="p-5 sm:p-6 bg-slate-50 border border-slate-200 rounded-[8px] space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+                <div>
+                  <span className="text-xs uppercase tracking-wider font-bold text-cambria-navy block">
+                    Generate Official Documents
+                  </span>
+                  <p className="text-[11px] text-slate-500 pt-0.5">
+                    Choose visual designs for documents to be generated upon credential issuance.
+                  </p>
+                </div>
                 <Link
                   href="/admin/templates/new"
                   target="_blank"
-                  className="text-xs text-cambria-navy hover:underline font-semibold"
+                  className="text-xs text-cambria-academic hover:underline font-semibold flex items-center gap-1.5"
                 >
+                  <Sparkles className="w-3.5 h-3.5 text-[#C8A84E]" />
                   + Create New Template
                 </Link>
               </div>
 
-              {/* Certificate Template */}
-              <div className="space-y-2 p-3 bg-white border border-slate-200 rounded">
-                <label className="flex items-center gap-3 text-sm text-slate-800 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="generate_certificate"
-                    defaultChecked
-                    className="w-4 h-4 rounded border-slate-300 text-cambria-navy focus:ring-cambria-academic"
-                  />
-                  <span>
-                    Generate <strong>Official Certificate / Diploma</strong>
-                  </span>
-                </label>
-                <div className="pl-7 space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-600 block">Certificate Design Template:</label>
-                  <select
-                    name="certificate_template_id"
-                    className="flex h-9 w-full rounded border border-slate-300 bg-white px-2.5 py-1 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cambria-academic"
-                  >
-                    {templates.filter((t) => t.template_kind === "certificate").map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} ({t.width}×{t.height}px) {t.is_active ? "— [Default]" : ""}
-                      </option>
-                    ))}
-                    {templates.filter((t) => t.template_kind === "certificate").length === 0 && (
-                      <option value="">Default Institutional Certificate (1600×1131)</option>
-                    )}
-                  </select>
+              {/* Certificate Visual Selector */}
+              <div className="space-y-3.5 p-4 sm:p-5 bg-white border border-slate-200 rounded-[8px] shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-3 text-sm text-slate-800 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      name="generate_certificate"
+                      checked={generateCertificate}
+                      onChange={(e) => setGenerateCertificate(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-300 text-cambria-navy focus:ring-cambria-academic"
+                    />
+                    <span>
+                      Generate <strong>Official Certificate / Diploma</strong>
+                    </span>
+                  </label>
+                  {generateCertificate && (
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      Select Certificate Design
+                    </span>
+                  )}
                 </div>
+
+                {generateCertificate && (
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-semibold text-slate-700">
+                        Certificate Design Template:
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        {templates.filter((t) => t.template_kind === "certificate").length} templates available
+                      </span>
+                    </div>
+
+                    <TemplateVisualPicker
+                      templates={templates}
+                      selectedId={selectedCertTemplateId}
+                      onSelect={(id) => setSelectedCertTemplateId(id)}
+                      name="certificate_template_id"
+                      kind="certificate"
+                      disabled={!generateCertificate}
+                    />
+                  </div>
+                )}
               </div>
 
-              {/* Student Card Template */}
-              <div className="space-y-2 p-3 bg-white border border-slate-200 rounded">
-                <label className="flex items-center gap-3 text-sm text-slate-800 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="generate_student_card"
-                    defaultChecked
-                    className="w-4 h-4 rounded border-slate-300 text-cambria-navy focus:ring-cambria-academic"
-                  />
-                  <span>
-                    Generate <strong>Official Student Identification Card</strong>
-                  </span>
-                </label>
-                <div className="pl-7 space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-600 block">Student Card Design Template:</label>
-                  <select
-                    name="card_template_id"
-                    className="flex h-9 w-full rounded border border-slate-300 bg-white px-2.5 py-1 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cambria-academic"
-                  >
-                    {templates.filter((t) => t.template_kind === "student_card").map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} ({t.width}×{t.height}px) {t.is_active ? "— [Default]" : ""}
-                      </option>
-                    ))}
-                    {templates.filter((t) => t.template_kind === "student_card").length === 0 && (
-                      <option value="">Default Student ID Card (600×900)</option>
-                    )}
-                  </select>
+              {/* Student Card Visual Selector */}
+              <div className="space-y-3.5 p-4 sm:p-5 bg-white border border-slate-200 rounded-[8px] shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-3 text-sm text-slate-800 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      name="generate_student_card"
+                      checked={generateStudentCard}
+                      onChange={(e) => setGenerateStudentCard(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-300 text-cambria-navy focus:ring-cambria-academic"
+                    />
+                    <span>
+                      Generate <strong>Official Student Identification Card</strong>
+                    </span>
+                  </label>
+                  {generateStudentCard && (
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      Select Student Card Design
+                    </span>
+                  )}
                 </div>
+
+                {generateStudentCard && (
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-semibold text-slate-700">
+                        Student Card Design Template:
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        {templates.filter((t) => t.template_kind === "student_card").length} templates available
+                      </span>
+                    </div>
+
+                    <TemplateVisualPicker
+                      templates={templates}
+                      selectedId={selectedCardTemplateId}
+                      onSelect={(id) => setSelectedCardTemplateId(id)}
+                      name="card_template_id"
+                      kind="student_card"
+                      disabled={!generateStudentCard}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
