@@ -40,6 +40,9 @@ const PRESET_COLORS = [
 ];
 
 const FONTS = [
+  { value: "Alex Brush", label: "Alex Brush (Formal Calligraphy Script)" },
+  { value: "Great Vibes", label: "Great Vibes (Classic Elegant Script)" },
+  { value: "Montserrat", label: "Montserrat (Clean Grotesque Sans)" },
   { value: "Cormorant Garamond", label: "Cormorant Garamond (Editorial Serif)" },
   { value: "Cairo", label: "Cairo (Arabic Calligraphy - خط عربي)" },
   { value: "Inter", label: "Inter (Modern Sans-Serif)" },
@@ -54,12 +57,17 @@ const DYNAMIC_VARIABLES = [
   { value: "program_name_ar", label: "Academic Program (Arabic) — البرنامج عربي" },
   { value: "credential_number", label: "Credential Number — رقم الاعتماد والشهادة" },
   { value: "student_id_number", label: "Student ID Number — الرقم الجامعي للطالب" },
+  { value: "student_national_id", label: "National ID (Masked) — الرقم القومي" },
+  { value: "student_country", label: "Student Country — الدولة / الجنسية" },
+  { value: "specialization", label: "Specialization / Major — التخصص الأكاديمي" },
+  { value: "grade", label: "Academic Grade / Honors — التقدير الأكاديمي" },
   { value: "issue_date", label: "Issue Date — تاريخ الإصدار" },
   { value: "expiry_date", label: "Expiry Date — تاريخ الانتهاء" },
   { value: "degree_level", label: "Degree Level — الدرجة الأكاديمية" },
   { value: "college_name_en", label: "College Name (English) — كلية كامبريا" },
   { value: "college_name_ar", label: "College Name (Arabic) — كلية كامبريا الدولية" },
   { value: "verification_url", label: "Verification QR URL — رابط التحقق الرقمي" },
+  { value: "verification_notice", label: "Verification Notice — نص وبوابة التحقق" },
   { value: "student_photo", label: "Student Photo / Avatar — صورة الطالب" },
   { value: "college_seal", label: "Institutional College Seal — ختم الكلية" },
 ];
@@ -301,6 +309,30 @@ export function FieldPropertiesPanel({
                 <option value={700}>Bold (700)</option>
                 <option value={800}>Extra Bold (800)</option>
               </select>
+            </div>
+          </div>
+
+          {/* Font Style & Static Prefix */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="space-y-1">
+              <span className="text-[10px] text-slate-400">Font Style</span>
+              <select
+                value={field.fontStyle || "normal"}
+                onChange={(e) => onUpdateField(field.id, { fontStyle: e.target.value as "normal" | "italic" })}
+                className="w-full h-7 px-2 text-xs bg-slate-900 border border-slate-700 text-white rounded-[4px]"
+              >
+                <option value="normal">Normal (مستقيم)</option>
+                <option value="italic">Italic (مائل / خط مائل)</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] text-slate-400">Static Prefix (e.g. &quot;: &quot;)</span>
+              <Input
+                value={field.staticPrefix || ""}
+                onChange={(e) => onUpdateField(field.id, { staticPrefix: e.target.value })}
+                placeholder='e.g. ": " or "ID: "'
+                className="h-7 text-xs bg-slate-900 border-slate-700 font-mono text-white"
+              />
             </div>
           </div>
 

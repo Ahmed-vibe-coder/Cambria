@@ -194,6 +194,9 @@ export function TemplateCanvas({
               }
             }
 
+            const prefix = field.staticPrefix || "";
+            const finalRenderedText = prefix ? `${prefix}${displayContent}` : displayContent;
+
             return (
               <div
                 key={field.id}
@@ -242,15 +245,25 @@ export function TemplateCanvas({
                   </div>
                 ) : field.type === "image" ? (
                   field.contentKey === "college_seal" ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="w-full h-full rounded-full border-2 border-[#C8A84E] flex items-center justify-center bg-[#C8A84E]/10 text-[#C8A84E] font-bold text-xs text-center p-2">
-                        OFFICIAL SEAL
-                      </div>
+                    <div className="w-full h-full flex items-center justify-center p-1">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/images/cambria-seal.png"
+                        alt="Cambria Official Seal"
+                        className="w-full h-full object-contain filter drop-shadow-sm"
+                      />
                     </div>
                   ) : field.contentKey === "student_photo" || field.contentKey === "student_avatar" ? (
-                    <div className="w-full h-full border-2 border-[#C8A84E] rounded overflow-hidden flex flex-col items-center justify-center bg-slate-100 text-slate-400">
-                      <ImageIcon className="w-8 h-8 text-[#C8A84E]" />
-                      <span className="text-[9px] font-bold text-[#020B5A] mt-1">PHOTO</span>
+                    <div
+                      style={{ borderRadius: field.borderRadius ? `${field.borderRadius}px` : undefined }}
+                      className="w-full h-full border-2 border-[#C8A84E] overflow-hidden flex flex-col items-center justify-center bg-slate-100 text-slate-400"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/images/avatar-placeholder.png"
+                        alt="Student Photo"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 text-[10px] text-slate-500">
@@ -262,7 +275,13 @@ export function TemplateCanvas({
                   <div
                     style={{
                       fontFamily:
-                        field.font === "Cormorant Garamond"
+                        field.font === "Alex Brush"
+                          ? "'Alex Brush', cursive"
+                          : field.font === "Great Vibes"
+                          ? "'Great Vibes', cursive"
+                          : field.font === "Montserrat"
+                          ? "'Montserrat', sans-serif"
+                          : field.font === "Cormorant Garamond"
                           ? "'Cormorant Garamond', serif"
                           : field.font === "Cairo"
                           ? "'Cairo', sans-serif"
@@ -273,6 +292,7 @@ export function TemplateCanvas({
                           : "'Inter', sans-serif",
                       fontSize: `${field.size || 16}px`,
                       fontWeight: field.weight || 400,
+                      fontStyle: field.fontStyle || "normal",
                       color: field.color || (isCertificate ? "#020B5A" : "#FFFFFF"),
                       textAlign: field.align || (isRtl ? "right" : "left"),
                       direction: isRtl ? "rtl" : "ltr",
@@ -284,7 +304,7 @@ export function TemplateCanvas({
                       !previewMode && !field.staticText && !displayContent && "text-slate-400 italic"
                     )}
                   >
-                    {displayContent}
+                    {finalRenderedText}
                   </div>
                 )}
               </div>

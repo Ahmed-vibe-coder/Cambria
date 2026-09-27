@@ -502,7 +502,53 @@ export async function updateTemplate(
   return updated;
 }
 
+export async function isTemplateInUse(id: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { count, error } = await supabase
+        .from("credential_documents")
+        .select("id", { count: "exact" })
+        .eq("template_id", id);
+      if (!error && (count || 0) > 0) return true;
+    } catch (err) {
+      console.warn("[DB] Supabase isTemplateInUse check error:", err);
+    }
+  }
+
+  try {
+    const rows = await db.query<{ count: string | number }>(
+      `SELECT COUNT(*) as count FROM credential_documents WHERE template_id = $1;`,
+      [id]
+    );
+    if (rows && rows.length > 0 && Number(rows[0].count) > 0) return true;
+  } catch (err) {
+    console.warn("[DB] PGlite isTemplateInUse check error:", err);
+  }
+
+  for (const cred of memoryCredentials) {
+    if (cred.documents?.some((d) => d.template_id === id)) {
+      return true;
+    }
+  }
+
+  for (const cred of FALLBACK_CREDENTIALS) {
+    if (cred.documents?.some((d) => d.template_id === id)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export async function deleteTemplate(id: string): Promise<boolean> {
+  const inUse = await isTemplateInUse(id);
+  if (inUse) {
+    throw new Error(
+      "Cannot delete template: it is currently referenced by issued credentials. Deletion is restricted to protect credential document integrity."
+    );
+  }
+
   const supabase = getSupabase();
   if (supabase) {
     try {
@@ -855,27 +901,53 @@ export async function transitionCredentialStatus(
   const supabase = getSupabase();
   if (supabase) {
     try {
-      await supabase.from("credentials").update(updates).eq("id", credentialId);
-      await addAuditLog({
-        entity_type: "credential",
-        entity_id: credentialId,
-        action: newStatus,
-        actor_email: actor_email,
-        actor_id: actor_id,
-        from_state: current.status,
-        to_state: newStatus,
-        reason: reason,
-      });
-      return await getCredentialById(credentialId);
+      const { error } = await supabase.from("credentials").update(updates).eq("id", credentialId);
+      if (!error) {
+        await addAuditLog({
+          entity_type: "credential",
+          entity_id: credentialId,
+          action: newStatus,
+          actor_email: actor_email,
+          actor_id: actor_id,
+          from_state: current.status,
+          to_state: newStatus,
+          reason: reason,
+        });
+        return await getCredentialById(credentialId);
+      }
     } catch (err) {
       console.warn("[DB] Supabase transitionCredentialStatus error:", err);
     }
   }
 
+  // Update local PGlite if available
+  try {
+    await db.query(
+      `UPDATE credentials SET status = $1, updated_at = $2 WHERE id = $3;`,
+      [newStatus, now, credentialId]
+    );
+  } catch (err) {
+    console.warn("[DB] PGlite update credential status error:", err);
+  }
+
+  // Always record audit log on status transition
+  await addAuditLog({
+    entity_type: "credential",
+    entity_id: credentialId,
+    action: newStatus,
+    actor_email: actor_email,
+    actor_id: actor_id,
+    from_state: current.status,
+    to_state: newStatus,
+    reason: reason,
+  });
+
   // Memory fallback
   Object.assign(current, updates);
   return current;
 }
+
+export const updateCredentialStatus = transitionCredentialStatus;
 
 export async function deleteCredential(id: string): Promise<boolean> {
   const supabase = getSupabase();

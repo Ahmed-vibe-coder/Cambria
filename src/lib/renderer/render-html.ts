@@ -338,12 +338,15 @@ export function generateDocumentHtml(payload: RenderPayload): string {
             src="${data.qr_data_uri}"
             alt="Cryptographic Verification QR"
             style="
-              width: ${field.w}px;
-              height: ${field.h}px;
+              width: 100%;
+              height: 100%;
               border-radius: ${field.borderRadius ?? 4}px;
               background: #FFFFFF;
-              padding: 4px;
+              padding: 2px;
               object-fit: contain;
+              image-rendering: pixelated;
+              image-rendering: -moz-crisp-edges;
+              image-rendering: crisp-edges;
             "
           />
         </div>
