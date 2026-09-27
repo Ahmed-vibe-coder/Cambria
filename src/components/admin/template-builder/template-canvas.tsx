@@ -38,108 +38,256 @@ export function TemplateCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const [draggingFieldId, setDraggingFieldId] = useState<string | null>(null);
   const [resizingFieldId, setResizingFieldId] = useState<string | null>(null);
-  const [dragStart, setDragStart] = useState<{ x: number; y: number; fieldX: number; fieldY: number }>({
-    x: 0,
-    y: 0,
-    fieldX: 0,
-    fieldY: 0,
-  });
-  const [resizeStart, setResizeStart] = useState<{ x: number; y: number; fieldW: number; fieldH: number }>({
-    x: 0,
-    y: 0,
-    fieldW: 0,
-    fieldH: 0,
-  });
+
+  const isDraggingRef = useRef(false);
+  const isResizingRef = useRef(false);
+  const activeFieldIdRef = useRef<string | null>(null);
+  const dragOccurredRef = useRef(false);
+  const justFinishedDragRef = useRef(false);
+
+  const dragStartRef = useRef<{
+    clientX: number;
+    clientY: number;
+    fieldX: number;
+    fieldY: number;
+  }>({ clientX: 0, clientY: 0, fieldX: 0, fieldY: 0 });
+
+  const resizeStartRef = useRef<{
+    clientX: number;
+    clientY: number;
+    fieldW: number;
+    fieldH: number;
+  }>({ clientX: 0, clientY: 0, fieldW: 0, fieldH: 0 });
+
+  // Up-to-date refs to prevent stale closures and listener recreation thrashing
+  const onUpdateFieldRef = useRef(onUpdateField);
+  onUpdateFieldRef.current = onUpdateField;
+
+  const onSelectFieldRef = useRef(onSelectField);
+  onSelectFieldRef.current = onSelectField;
+
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+
+  const showGridRef = useRef(showGrid);
+  showGridRef.current = showGrid;
+
+  const widthRef = useRef(width);
+  widthRef.current = width;
+
+  const heightRef = useRef(height);
+  heightRef.current = height;
+
+  const fieldsRef = useRef(fields);
+  fieldsRef.current = fields;
 
   const isCertificate = templateKind === "certificate";
 
   // Handle Field Drag Start
   const handleFieldMouseDown = (e: React.MouseEvent, field: TemplateField) => {
     if (previewMode) return;
+    if (e.button !== 0) return; // Only primary left-click
     e.stopPropagation();
+
+    // Select immediately on mouse down
     onSelectField(field.id);
-    setDraggingFieldId(field.id);
-    setDragStart({
-      x: e.clientX,
-      y: e.clientY,
+
+    isDraggingRef.current = true;
+    dragOccurredRef.current = false;
+    justFinishedDragRef.current = false;
+    activeFieldIdRef.current = field.id;
+
+    dragStartRef.current = {
+      clientX: e.clientX,
+      clientY: e.clientY,
       fieldX: field.x,
       fieldY: field.y,
-    });
+    };
+
+    setDraggingFieldId(field.id);
   };
 
   // Handle Field Resize Start
   const handleResizeMouseDown = (e: React.MouseEvent, field: TemplateField) => {
     if (previewMode) return;
+    if (e.button !== 0) return;
     e.stopPropagation();
+
     onSelectField(field.id);
-    setResizingFieldId(field.id);
-    setResizeStart({
-      x: e.clientX,
-      y: e.clientY,
+
+    isResizingRef.current = true;
+    dragOccurredRef.current = false;
+    justFinishedDragRef.current = false;
+    activeFieldIdRef.current = field.id;
+
+    resizeStartRef.current = {
+      clientX: e.clientX,
+      clientY: e.clientY,
       fieldW: field.w,
       fieldH: field.h,
-    });
+    };
+
+    setResizingFieldId(field.id);
   };
 
-  // Handle Global Mouse Move & Up for dragging/resizing
+  // Stable Global Mouse Move & Up Handler
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (draggingFieldId) {
-        const deltaX = (e.clientX - dragStart.x) / zoom;
-        const deltaY = (e.clientY - dragStart.y) / zoom;
-        let newX = Math.round(dragStart.fieldX + deltaX);
-        let newY = Math.round(dragStart.fieldY + deltaY);
+    const handleWindowMouseMove = (e: MouseEvent) => {
+      const z = zoomRef.current || 1;
+      const w = widthRef.current;
+      const h = heightRef.current;
+      const grid = showGridRef.current;
+
+      if (isDraggingRef.current && activeFieldIdRef.current) {
+        const deltaScreenX = e.clientX - dragStartRef.current.clientX;
+        const deltaScreenY = e.clientY - dragStartRef.current.clientY;
+
+        if (Math.abs(deltaScreenX) > 2 || Math.abs(deltaScreenY) > 2) {
+          dragOccurredRef.current = true;
+        }
+
+        const deltaX = deltaScreenX / z;
+        const deltaY = deltaScreenY / z;
+
+        let newX = Math.round(dragStartRef.current.fieldX + deltaX);
+        let newY = Math.round(dragStartRef.current.fieldY + deltaY);
 
         // Snap to 10px grid if grid is enabled
-        if (showGrid) {
+        if (grid) {
           newX = Math.round(newX / 10) * 10;
           newY = Math.round(newY / 10) * 10;
         }
 
         // Clamp inside canvas boundary
-        newX = Math.max(0, Math.min(width - 20, newX));
-        newY = Math.max(0, Math.min(height - 20, newY));
+        newX = Math.max(0, Math.min(w - 20, newX));
+        newY = Math.max(0, Math.min(h - 20, newY));
 
-        onUpdateField(draggingFieldId, { x: newX, y: newY });
-      } else if (resizingFieldId) {
-        const deltaW = (e.clientX - resizeStart.x) / zoom;
-        const deltaH = (e.clientY - resizeStart.y) / zoom;
-        let newW = Math.max(30, Math.round(resizeStart.fieldW + deltaW));
-        let newH = Math.max(20, Math.round(resizeStart.fieldH + deltaH));
+        onUpdateFieldRef.current(activeFieldIdRef.current, { x: newX, y: newY });
+      } else if (isResizingRef.current && activeFieldIdRef.current) {
+        const deltaScreenW = e.clientX - resizeStartRef.current.clientX;
+        const deltaScreenH = e.clientY - resizeStartRef.current.clientY;
 
-        if (showGrid) {
+        if (Math.abs(deltaScreenW) > 2 || Math.abs(deltaScreenH) > 2) {
+          dragOccurredRef.current = true;
+        }
+
+        const deltaW = deltaScreenW / z;
+        const deltaH = deltaScreenH / z;
+
+        let newW = Math.max(30, Math.round(resizeStartRef.current.fieldW + deltaW));
+        let newH = Math.max(20, Math.round(resizeStartRef.current.fieldH + deltaH));
+
+        if (grid) {
           newW = Math.round(newW / 10) * 10;
           newH = Math.round(newH / 10) * 10;
         }
 
-        onUpdateField(resizingFieldId, { w: newW, h: newH });
+        onUpdateFieldRef.current(activeFieldIdRef.current, { w: newW, h: newH });
       }
     };
 
-    const handleMouseUp = () => {
-      setDraggingFieldId(null);
-      setResizingFieldId(null);
+    const handleWindowMouseUp = () => {
+      if (isDraggingRef.current || isResizingRef.current) {
+        isDraggingRef.current = false;
+        isResizingRef.current = false;
+        setDraggingFieldId(null);
+        setResizingFieldId(null);
+
+        if (dragOccurredRef.current) {
+          justFinishedDragRef.current = true;
+          setTimeout(() => {
+            justFinishedDragRef.current = false;
+            dragOccurredRef.current = false;
+          }, 150);
+        }
+      }
     };
 
-    if (draggingFieldId || resizingFieldId) {
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
-    }
+    window.addEventListener("mousemove", handleWindowMouseMove, { passive: true });
+    window.addEventListener("mouseup", handleWindowMouseUp);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("mousemove", handleWindowMouseMove);
+      window.removeEventListener("mouseup", handleWindowMouseUp);
     };
-  }, [draggingFieldId, resizingFieldId, dragStart, resizeStart, zoom, showGrid, width, height, onUpdateField]);
+  }, []);
+
+  // Keyboard Nudge & Navigation for Selected Field
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedFieldId || previewMode) return;
+
+      // Don't intercept if user is typing in form controls
+      const activeEl = document.activeElement;
+      if (
+        activeEl &&
+        (activeEl.tagName === "INPUT" ||
+          activeEl.tagName === "TEXTAREA" ||
+          activeEl.tagName === "SELECT")
+      ) {
+        return;
+      }
+
+      const targetField = fieldsRef.current.find((f) => f.id === selectedFieldId);
+      if (!targetField) return;
+
+      const step = e.shiftKey ? 10 : 1;
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        onUpdateFieldRef.current(selectedFieldId, {
+          x: Math.max(0, targetField.x - step),
+        });
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        onUpdateFieldRef.current(selectedFieldId, {
+          x: Math.min(widthRef.current - 20, targetField.x + step),
+        });
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        onUpdateFieldRef.current(selectedFieldId, {
+          y: Math.max(0, targetField.y - step),
+        });
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        onUpdateFieldRef.current(selectedFieldId, {
+          y: Math.min(heightRef.current - 20, targetField.y + step),
+        });
+      } else if (e.key === "Escape") {
+        onSelectFieldRef.current(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedFieldId, previewMode]);
 
   return (
     <div
       ref={containerRef}
-      onClick={() => onSelectField(null)}
+      data-canvas-container="true"
+      onClick={(e) => {
+        // If a drag just took place, ignore this click
+        if (justFinishedDragRef.current || dragOccurredRef.current) {
+          return;
+        }
+
+        // Only deselect if clicked directly on container background or canvas board background
+        const target = e.target as HTMLElement;
+        const isBg =
+          target === containerRef.current ||
+          target.getAttribute("data-canvas-board") === "true" ||
+          target.getAttribute("data-canvas-bg") === "true";
+
+        if (isBg) {
+          onSelectField(null);
+        }
+      }}
       className="relative flex items-center justify-center p-8 min-h-[600px] overflow-auto select-none bg-slate-950/40 rounded-lg border border-slate-800"
     >
-      {/* Canvas Paper / Board */}
+      {/* Canvas Paper / Board Wrapper */}
       <div
+        data-canvas-board="true"
         style={{
           width: `${width * zoom}px`,
           height: `${height * zoom}px`,
@@ -147,6 +295,7 @@ export function TemplateCanvas({
         className="relative transition-all duration-75 shadow-2xl overflow-hidden rounded-[2px]"
       >
         <div
+          data-canvas-bg="true"
           style={{
             width: `${width}px`,
             height: `${height}px`,
@@ -165,18 +314,21 @@ export function TemplateCanvas({
         >
           {/* Default Decorative Borders if no background image is uploaded */}
           {!backgroundImageUrl && isCertificate && (
-            <>
+            <div data-canvas-bg="true" className="pointer-events-none">
               <div className="absolute top-[30px] left-[30px] right-[30px] bottom-[30px] border-[3px] border-[#020B5A] pointer-events-none" />
               <div className="absolute top-[40px] left-[40px] right-[40px] bottom-[40px] border border-[#C8A84E] pointer-events-none" />
               <div className="absolute top-[46px] left-[46px] w-10 h-10 border-t-2 border-l-2 border-[#C8A84E] pointer-events-none" />
               <div className="absolute top-[46px] right-[46px] w-10 h-10 border-t-2 border-r-2 border-[#C8A84E] pointer-events-none" />
               <div className="absolute bottom-[46px] left-[46px] w-10 h-10 border-b-2 border-l-2 border-[#C8A84E] pointer-events-none" />
               <div className="absolute bottom-[46px] right-[46px] w-10 h-10 border-b-2 border-r-2 border-[#C8A84E] pointer-events-none" />
-            </>
+            </div>
           )}
 
           {!backgroundImageUrl && !isCertificate && (
-            <div className="absolute top-[15px] left-[15px] right-[15px] bottom-[15px] border border-[#C8A84E]/40 rounded-lg pointer-events-none" />
+            <div
+              data-canvas-bg="true"
+              className="absolute top-[15px] left-[15px] right-[15px] bottom-[15px] border border-[#C8A84E]/40 rounded-lg pointer-events-none"
+            />
           )}
 
           {/* DYNAMIC PLACED FIELDS */}
@@ -201,6 +353,10 @@ export function TemplateCanvas({
               <div
                 key={field.id}
                 onMouseDown={(e) => handleFieldMouseDown(e, field)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectField(field.id);
+                }}
                 style={{
                   left: `${field.x}px`,
                   top: `${field.y}px`,
@@ -210,18 +366,19 @@ export function TemplateCanvas({
                   borderRadius: field.borderRadius ? `${field.borderRadius}px` : undefined,
                 }}
                 className={cn(
-                  "absolute flex flex-col justify-center transition-shadow",
-                  !previewMode && "cursor-move hover:outline hover:outline-1 hover:outline-blue-400",
-                  isSelected && !previewMode && "outline outline-2 outline-[#C8A84E] bg-blue-500/10 shadow-lg z-30",
-                  !isSelected && !previewMode && "border border-dashed border-slate-400/60 bg-white/5"
+                  "absolute flex flex-col justify-center transition-shadow select-none",
+                  !previewMode && "cursor-pointer hover:outline hover:outline-2 hover:outline-blue-400/80 hover:bg-blue-500/5",
+                  isSelected && !previewMode && "outline outline-2 outline-[#C8A84E] bg-blue-500/10 shadow-lg z-30 cursor-move ring-2 ring-[#C8A84E]/40",
+                  !isSelected && !previewMode && "border border-dashed border-slate-400/60 bg-white/5 z-10"
                 )}
+                title={!previewMode ? `${field.label || field.id} — Click to select & edit in right panel` : undefined}
               >
                 {/* Field Coordinate Badge & Label (When Selected) */}
                 {isSelected && !previewMode && (
-                  <div className="absolute -top-7 left-0 bg-[#020B5A] text-white text-[11px] font-mono font-semibold px-2 py-0.5 rounded shadow flex items-center gap-1.5 whitespace-nowrap z-40 pointer-events-none">
+                  <div className="absolute -top-7 left-0 bg-[#020B5A] text-white text-[11px] font-mono font-semibold px-2 py-0.5 rounded shadow-lg flex items-center gap-1.5 whitespace-nowrap z-40 pointer-events-none border border-[#C8A84E]/40">
                     <Move className="w-3 h-3 text-[#C8A84E]" />
                     <span>{field.label || field.id}</span>
-                    <span className="text-slate-300 border-l border-white/20 pl-1.5">
+                    <span className="text-slate-300 border-l border-white/20 pl-1.5 text-[10px]">
                       {field.x},{field.y} ({field.w}×{field.h})
                     </span>
                   </div>
@@ -231,42 +388,46 @@ export function TemplateCanvas({
                 {isSelected && !previewMode && (
                   <div
                     onMouseDown={(e) => handleResizeMouseDown(e, field)}
-                    className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-[#C8A84E] border-2 border-white rounded-full cursor-nwse-resize shadow z-40"
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute -bottom-2 -right-2 w-4 h-4 bg-[#C8A84E] border-2 border-white rounded-full cursor-nwse-resize shadow-md z-40 hover:scale-125 transition-transform"
+                    title="Drag to resize field"
                   />
                 )}
 
-                {/* FIELD CONTENT RENDERING */}
+                {/* FIELD CONTENT RENDERING (pointer-events-none & draggable=false to prevent native browser conflicts) */}
                 {field.type === "qr" ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center p-1 bg-white border border-slate-200 rounded">
-                    <QrCode className="w-full h-full text-[#020B5A]" />
-                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mt-0.5">
+                  <div className="w-full h-full flex flex-col items-center justify-center p-1 bg-white border border-slate-200 rounded pointer-events-none select-none">
+                    <QrCode className="w-full h-full text-[#020B5A] pointer-events-none" />
+                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mt-0.5 pointer-events-none">
                       QR Verify
                     </span>
                   </div>
                 ) : field.type === "image" ? (
                   field.contentKey === "college_seal" ? (
-                    <div className="w-full h-full flex items-center justify-center p-1">
+                    <div className="w-full h-full flex items-center justify-center p-1 pointer-events-none select-none">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src="/images/cambria-seal.png"
                         alt="Cambria Official Seal"
-                        className="w-full h-full object-contain filter drop-shadow-sm"
+                        draggable={false}
+                        className="w-full h-full object-contain filter drop-shadow-sm pointer-events-none select-none"
                       />
                     </div>
                   ) : field.contentKey === "student_photo" || field.contentKey === "student_avatar" ? (
                     <div
                       style={{ borderRadius: field.borderRadius ? `${field.borderRadius}px` : undefined }}
-                      className="w-full h-full border-2 border-[#C8A84E] overflow-hidden flex flex-col items-center justify-center bg-slate-100 text-slate-400"
+                      className="w-full h-full border-2 border-[#C8A84E] overflow-hidden flex flex-col items-center justify-center bg-slate-100 text-slate-400 pointer-events-none select-none"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src="/images/avatar-placeholder.png"
                         alt="Student Photo"
-                        className="w-full h-full object-cover"
+                        draggable={false}
+                        className="w-full h-full object-cover pointer-events-none select-none"
                       />
                     </div>
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 text-[10px] text-slate-500">
+                    <div className="w-full h-full flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 text-[10px] text-slate-500 pointer-events-none select-none">
                       Image Asset
                     </div>
                   )
@@ -300,7 +461,7 @@ export function TemplateCanvas({
                       lineHeight: field.lineHeight ? `${field.lineHeight}` : 1.25,
                     }}
                     className={cn(
-                      "w-full truncate px-1",
+                      "w-full truncate px-1 pointer-events-none select-none",
                       !previewMode && !field.staticText && !displayContent && "text-slate-400 italic"
                     )}
                   >

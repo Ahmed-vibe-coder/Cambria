@@ -26,6 +26,8 @@ import {
   AlertCircle,
   Sparkles,
   ChevronDown,
+  Sliders,
+  Layers,
 } from "lucide-react";
 
 interface TemplateBuilderProps {
@@ -66,6 +68,7 @@ export function TemplateBuilder({
   const [previewMode, setPreviewMode] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isAddFieldOpen, setIsAddFieldOpen] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -83,7 +86,7 @@ export function TemplateBuilder({
   const selectedField = fields.find((f) => f.id === selectedFieldId) || null;
 
   // Add a field from preset
-  const handleAddFieldFromPreset = (preset: FieldPreset) => {
+  const handleAddFieldFromPreset = React.useCallback((preset: FieldPreset) => {
     const newField: TemplateField = {
       ...preset.field,
       id: `field_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -92,39 +95,40 @@ export function TemplateBuilder({
     setFields((prev) => [...prev, newField]);
     setSelectedFieldId(newField.id);
     setIsAddFieldOpen(false);
-  };
+    setIsSidebarOpen(true);
+  }, []);
 
   // Update a field's attributes
-  const handleUpdateField = (id: string, updates: Partial<TemplateField>) => {
+  const handleUpdateField = React.useCallback((id: string, updates: Partial<TemplateField>) => {
     setFields((prev) =>
       prev.map((f) => (f.id === id ? { ...f, ...updates } : f))
     );
-  };
+  }, []);
 
   // Delete a field
-  const handleDeleteField = (id: string) => {
+  const handleDeleteField = React.useCallback((id: string) => {
     setFields((prev) => prev.filter((f) => f.id !== id));
-    if (selectedFieldId === id) {
-      setSelectedFieldId(null);
-    }
-  };
+    setSelectedFieldId((current) => (current === id ? null : current));
+  }, []);
 
   // Duplicate a field
-  const handleDuplicateField = (id: string) => {
-    const target = fields.find((f) => f.id === id);
-    if (!target) return;
+  const handleDuplicateField = React.useCallback((id: string) => {
+    setFields((prev) => {
+      const target = prev.find((f) => f.id === id);
+      if (!target) return prev;
 
-    const dupField: TemplateField = {
-      ...target,
-      id: `field_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      x: Math.min(width - target.w, target.x + 30),
-      y: Math.min(height - target.h, target.y + 30),
-      label: `${target.label || target.id} (Copy)`,
-    };
+      const dupField: TemplateField = {
+        ...target,
+        id: `field_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        x: Math.min(width - target.w, target.x + 30),
+        y: Math.min(height - target.h, target.y + 30),
+        label: `${target.label || target.id} (Copy)`,
+      };
 
-    setFields((prev) => [...prev, dupField]);
-    setSelectedFieldId(dupField.id);
-  };
+      setSelectedFieldId(dupField.id);
+      return [...prev, dupField];
+    });
+  }, [width, height]);
 
   // Save Template Action
   const handleSave = async () => {
@@ -295,6 +299,23 @@ export function TemplateBuilder({
             {previewMode ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5 text-[#C8A84E]" />}
             <span>{previewMode ? "Exit Preview" : "Live Preview"}</span>
           </Button>
+
+          {/* Toggle Sidebar (Properties & Layers) */}
+          {!previewMode && (
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className={`h-8 px-2.5 rounded flex items-center gap-1.5 border text-xs font-medium transition-colors ${
+                isSidebarOpen
+                  ? "border-[#C8A84E] bg-[#C8A84E]/15 text-[#C8A84E]"
+                  : "border-slate-700 bg-slate-800 text-slate-400 hover:text-white"
+              }`}
+              title="Toggle Properties & Layers Sidebar"
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Layers ({fields.length})</span>
+            </button>
+          )}
         </div>
 
         {/* Right: Save Button & Status */}
@@ -336,7 +357,12 @@ export function TemplateBuilder({
             templateKind={templateKind}
             fields={fields}
             selectedFieldId={selectedFieldId}
-            onSelectField={setSelectedFieldId}
+            onSelectField={(id) => {
+              setSelectedFieldId(id);
+              if (id) {
+                setIsSidebarOpen(true);
+              }
+            }}
             onUpdateField={handleUpdateField}
             zoom={zoom}
             showGrid={showGrid}
@@ -345,15 +371,27 @@ export function TemplateBuilder({
         </main>
 
         {/* Right: Properties Inspector Sidebar */}
-        {!previewMode && (
-          <aside className="w-80 border-l border-slate-800 bg-slate-900/95 overflow-y-auto shrink-0 shadow-2xl">
+        {!previewMode && isSidebarOpen && (
+          <aside
+            data-builder-sidebar="true"
+            className="w-80 lg:w-96 border-l border-slate-800 bg-slate-900/95 overflow-y-auto shrink-0 shadow-2xl flex flex-col z-20"
+          >
             <FieldPropertiesPanel
               field={selectedField}
+              fields={fields}
+              selectedFieldId={selectedFieldId}
+              onSelectField={(id) => {
+                setSelectedFieldId(id);
+                if (id) {
+                  setIsSidebarOpen(true);
+                }
+              }}
               canvasWidth={width}
               canvasHeight={height}
               onUpdateField={handleUpdateField}
               onDeleteField={handleDeleteField}
               onDuplicateField={handleDuplicateField}
+              onAddFieldPreset={handleAddFieldFromPreset}
             />
           </aside>
         )}

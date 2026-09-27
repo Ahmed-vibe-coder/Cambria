@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { TemplateField } from "@/types/database";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { FieldPreset, AVAILABLE_FIELD_PRESETS } from "./template-presets";
 import {
   Trash2,
   Copy,
@@ -15,15 +16,27 @@ import {
   Type,
   Palette,
   Sliders,
+  ArrowLeft,
+  Plus,
+  Layers,
+  Sparkles,
+  QrCode,
+  Image as ImageIcon,
+  ChevronRight,
+  Check,
 } from "lucide-react";
 
-interface FieldPropertiesProps {
+export interface FieldPropertiesProps {
   field: TemplateField | null;
+  fields?: TemplateField[];
+  selectedFieldId?: string | null;
+  onSelectField?: (id: string | null) => void;
   canvasWidth: number;
   canvasHeight: number;
   onUpdateField: (id: string, updates: Partial<TemplateField>) => void;
   onDeleteField: (id: string) => void;
   onDuplicateField: (id: string) => void;
+  onAddFieldPreset?: (preset: FieldPreset) => void;
 }
 
 const PRESET_COLORS = [
@@ -74,21 +87,138 @@ const DYNAMIC_VARIABLES = [
 
 export function FieldPropertiesPanel({
   field,
+  fields = [],
+  selectedFieldId,
+  onSelectField,
   canvasWidth,
   canvasHeight,
   onUpdateField,
   onDeleteField,
   onDuplicateField,
+  onAddFieldPreset,
 }: FieldPropertiesProps) {
+  // If NO field is currently selected, display the Canvas Layers & Elements List
   if (!field) {
     return (
-      <div className="p-6 text-center text-slate-400 space-y-3">
-        <Sliders className="w-8 h-8 mx-auto text-slate-500 opacity-60" />
-        <h3 className="text-sm font-semibold text-slate-300">No Field Selected</h3>
-        <p className="text-xs text-slate-400 leading-relaxed">
-          Click on any field on the canvas or add a new field from the top toolbar to configure its
-          position, typography, and dynamic data variables.
-        </p>
+      <div className="p-4 space-y-5 text-xs text-slate-200">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-[#C8A84E]" />
+            <div>
+              <h3 className="text-sm font-bold text-white">Canvas Elements</h3>
+              <span className="text-[10px] text-slate-400">
+                {fields.length} active element{fields.length === 1 ? "" : "s"} on canvas
+              </span>
+            </div>
+          </div>
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-800 text-[#C8A84E] border border-slate-700">
+            {fields.length} Layers
+          </span>
+        </div>
+
+        {/* Elements List */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 px-1">
+            <span>Placed Elements (Click to Edit)</span>
+          </div>
+
+          {fields.length === 0 ? (
+            <div className="p-6 text-center border border-dashed border-slate-800 rounded-lg bg-slate-900/40 space-y-2">
+              <Sliders className="w-7 h-7 mx-auto text-slate-600" />
+              <p className="text-xs text-slate-400">No elements on canvas yet.</p>
+              <p className="text-[11px] text-slate-500">
+                Choose a preset below to place your first dynamic student field.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
+              {fields.map((f, idx) => {
+                const isSelected = selectedFieldId === f.id;
+                return (
+                  <div
+                    key={f.id}
+                    onClick={() => onSelectField?.(f.id)}
+                    className={`w-full text-left p-2.5 rounded-md border flex items-center justify-between gap-2 cursor-pointer transition-all ${
+                      isSelected
+                        ? "border-[#C8A84E] bg-[#C8A84E]/10 text-white shadow-sm"
+                        : "border-slate-800 bg-slate-900 hover:border-slate-700 hover:bg-slate-800/80 text-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-6 h-6 rounded flex items-center justify-center bg-slate-800 text-[#C8A84E] shrink-0 border border-slate-700">
+                        {f.type === "qr" ? (
+                          <QrCode className="w-3.5 h-3.5" />
+                        ) : f.type === "image" ? (
+                          <ImageIcon className="w-3.5 h-3.5" />
+                        ) : (
+                          <Type className="w-3.5 h-3.5" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-xs text-white truncate">
+                          {f.label || f.id}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono truncate">
+                          {f.x},{f.y} • {f.w}×{f.h}px
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDuplicateField(f.id)}
+                        title="Duplicate"
+                        className="h-6 w-6 p-0 text-slate-400 hover:text-white hover:bg-slate-700"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDeleteField(f.id)}
+                        title="Delete"
+                        className="h-6 w-6 p-0 text-rose-400 hover:text-rose-300 hover:bg-rose-950/40"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Quick Add Presets Section */}
+        {onAddFieldPreset && (
+          <div className="space-y-2 pt-3 border-t border-slate-800">
+            <div className="text-[11px] font-semibold text-slate-400 px-1">
+              Quick Add Presets
+            </div>
+            <div className="grid grid-cols-1 gap-1.5">
+              {AVAILABLE_FIELD_PRESETS.slice(0, 6).map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => onAddFieldPreset(preset)}
+                  className="w-full text-left px-2.5 py-2 rounded border border-slate-800 bg-slate-900/60 hover:bg-slate-800 hover:border-slate-700 flex items-center justify-between text-xs text-slate-300 hover:text-white transition-colors group"
+                >
+                  <div className="flex items-center gap-2">
+                    <Plus className="w-3.5 h-3.5 text-[#C8A84E] group-hover:scale-110 transition-transform" />
+                    <span className="font-medium">{preset.label}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-sans">{preset.labelAr}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -107,25 +237,41 @@ export function FieldPropertiesPanel({
   };
 
   return (
-    <div className="p-5 space-y-6 text-xs text-slate-200">
-      {/* Header & Quick Actions */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-700/80">
-        <div>
-          <span className="text-[10px] uppercase font-bold tracking-wider text-[#C8A84E]">
-            Field Properties
-          </span>
-          <h3 className="text-sm font-bold text-white truncate max-w-[180px]">
-            {field.label || field.id}
-          </h3>
+    <div className="p-4 sm:p-5 space-y-5 text-xs text-slate-200">
+      {/* 1. Header with Back Button & Quick Actions */}
+      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="flex items-center gap-2 min-w-0">
+          {onSelectField && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onSelectField(null)}
+              className="h-7 px-2 text-slate-400 hover:text-white hover:bg-slate-800 text-[11px] gap-1 -ml-1 shrink-0"
+              title="Return to elements list"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Layers</span>
+            </Button>
+          )}
+          <div className="min-w-0">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-[#C8A84E] block">
+              Properties
+            </span>
+            <h3 className="text-sm font-bold text-white truncate max-w-[140px] sm:max-w-[170px]">
+              {field.label || field.id}
+            </h3>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
+
+        <div className="flex items-center gap-1 shrink-0">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={() => onDuplicateField(field.id)}
             title="Duplicate Field"
-            className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-slate-800"
+            className="h-7 w-7 p-0 text-slate-400 hover:text-white hover:bg-slate-800"
           >
             <Copy className="w-3.5 h-3.5" />
           </Button>
@@ -135,17 +281,17 @@ export function FieldPropertiesPanel({
             size="sm"
             onClick={() => onDeleteField(field.id)}
             title="Delete Field"
-            className="h-8 w-8 p-0 text-rose-400 hover:text-rose-300 hover:bg-rose-950/40"
+            className="h-7 w-7 p-0 text-rose-400 hover:text-rose-300 hover:bg-rose-950/40"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>
 
-      {/* 1. Field Label & Type */}
+      {/* 2. Field Label & Data Binding */}
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-slate-300">Field Display Label</label>
+          <label className="text-[11px] font-semibold text-slate-300">Display Label</label>
           <Input
             value={field.label || ""}
             onChange={(e) => onUpdateField(field.id, { label: e.target.value })}
@@ -156,9 +302,9 @@ export function FieldPropertiesPanel({
 
         {/* Dynamic Variable or Static Text */}
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-slate-300">Dynamic Variable Binding</label>
+          <label className="text-[11px] font-semibold text-slate-300">Data Variable Binding</label>
           <select
-            value={field.contentKey || ""}
+            value={field.contentKey || (field.staticText ? "custom_static" : "")}
             onChange={(e) => {
               const val = e.target.value;
               if (val === "custom_static") {
@@ -191,10 +337,10 @@ export function FieldPropertiesPanel({
         )}
       </div>
 
-      {/* 2. Position & Dimensions */}
-      <div className="space-y-3 pt-2 border-t border-slate-700/60">
+      {/* 3. Position & Dimensions (px) */}
+      <div className="space-y-3 pt-3 border-t border-slate-800">
         <div className="flex items-center justify-between">
-          <span className="font-semibold text-slate-300">Position & Dimensions (px)</span>
+          <span className="font-semibold text-slate-300">Coordinates & Size (px)</span>
           <div className="flex items-center gap-1">
             <Button
               type="button"
@@ -219,9 +365,9 @@ export function FieldPropertiesPanel({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
-            <span className="text-[10px] text-slate-400">X Position</span>
+            <span className="text-[10px] text-slate-400">X (Horizontal)</span>
             <Input
               type="number"
               value={field.x}
@@ -230,7 +376,7 @@ export function FieldPropertiesPanel({
             />
           </div>
           <div className="space-y-1">
-            <span className="text-[10px] text-slate-400">Y Position</span>
+            <span className="text-[10px] text-slate-400">Y (Vertical)</span>
             <Input
               type="number"
               value={field.y}
@@ -259,12 +405,12 @@ export function FieldPropertiesPanel({
         </div>
       </div>
 
-      {/* 3. Typography & Styling (For Text Fields) */}
+      {/* 4. Typography & Styling (For Text Fields) */}
       {isText && (
-        <div className="space-y-3 pt-2 border-t border-slate-700/60">
+        <div className="space-y-3 pt-3 border-t border-slate-800">
           <span className="font-semibold text-slate-300 flex items-center gap-1.5">
             <Type className="w-3.5 h-3.5 text-[#C8A84E]" />
-            Typography & Font Styling
+            Typography & Font
           </span>
 
           {/* Font Family */}
@@ -284,13 +430,13 @@ export function FieldPropertiesPanel({
           </div>
 
           {/* Font Size & Weight */}
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <span className="text-[10px] text-slate-400">Font Size ({field.size || 16}px)</span>
               <Input
                 type="number"
                 min={8}
-                max={120}
+                max={140}
                 value={field.size || 16}
                 onChange={(e) => onUpdateField(field.id, { size: Number(e.target.value) })}
                 className="h-7 text-xs bg-slate-900 border-slate-700 font-mono text-white"
@@ -313,7 +459,7 @@ export function FieldPropertiesPanel({
           </div>
 
           {/* Font Style & Static Prefix */}
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <span className="text-[10px] text-slate-400">Font Style</span>
               <select
@@ -322,7 +468,7 @@ export function FieldPropertiesPanel({
                 className="w-full h-7 px-2 text-xs bg-slate-900 border border-slate-700 text-white rounded-[4px]"
               >
                 <option value="normal">Normal (مستقيم)</option>
-                <option value="italic">Italic (مائل / خط مائل)</option>
+                <option value="italic">Italic (مائل)</option>
               </select>
             </div>
             <div className="space-y-1">
@@ -336,29 +482,44 @@ export function FieldPropertiesPanel({
             </div>
           </div>
 
-          {/* Alignment & Direction */}
-          <div className="grid grid-cols-2 gap-2.5">
+          {/* Alignment & Reading Direction */}
+          <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <span className="text-[10px] text-slate-400">Text Align</span>
               <div className="flex rounded-[4px] border border-slate-700 overflow-hidden">
                 <button
                   type="button"
                   onClick={() => onUpdateField(field.id, { align: "left" })}
-                  className={`flex-1 h-7 flex items-center justify-center ${field.align === "left" || (!field.align && field.direction !== "rtl") ? "bg-[#C8A84E] text-slate-900 font-bold" : "bg-slate-900 text-slate-400"}`}
+                  className={`flex-1 h-7 flex items-center justify-center transition-colors ${
+                    field.align === "left" || (!field.align && field.direction !== "rtl")
+                      ? "bg-[#C8A84E] text-slate-950 font-bold"
+                      : "bg-slate-900 text-slate-400 hover:text-white"
+                  }`}
+                  title="Align Left"
                 >
                   <AlignLeft className="w-3.5 h-3.5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => onUpdateField(field.id, { align: "center" })}
-                  className={`flex-1 h-7 flex items-center justify-center ${field.align === "center" ? "bg-[#C8A84E] text-slate-900 font-bold" : "bg-slate-900 text-slate-400"}`}
+                  className={`flex-1 h-7 flex items-center justify-center transition-colors ${
+                    field.align === "center"
+                      ? "bg-[#C8A84E] text-slate-950 font-bold"
+                      : "bg-slate-900 text-slate-400 hover:text-white"
+                  }`}
+                  title="Align Center"
                 >
                   <AlignCenter className="w-3.5 h-3.5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => onUpdateField(field.id, { align: "right" })}
-                  className={`flex-1 h-7 flex items-center justify-center ${field.align === "right" || (!field.align && field.direction === "rtl") ? "bg-[#C8A84E] text-slate-900 font-bold" : "bg-slate-900 text-slate-400"}`}
+                  className={`flex-1 h-7 flex items-center justify-center transition-colors ${
+                    field.align === "right" || (!field.align && field.direction === "rtl")
+                      ? "bg-[#C8A84E] text-slate-950 font-bold"
+                      : "bg-slate-900 text-slate-400 hover:text-white"
+                  }`}
+                  title="Align Right"
                 >
                   <AlignRight className="w-3.5 h-3.5" />
                 </button>
@@ -402,7 +563,9 @@ export function FieldPropertiesPanel({
                   type="button"
                   onClick={() => onUpdateField(field.id, { color: c })}
                   style={{ backgroundColor: c }}
-                  className={`w-5 h-5 rounded-full border ${field.color === c ? "ring-2 ring-[#C8A84E] border-white scale-110" : "border-slate-700"} transition-transform`}
+                  className={`w-5 h-5 rounded-full border ${
+                    field.color === c ? "ring-2 ring-[#C8A84E] border-white scale-110" : "border-slate-700"
+                  } transition-transform`}
                   title={c}
                 />
               ))}
@@ -411,8 +574,8 @@ export function FieldPropertiesPanel({
         </div>
       )}
 
-      {/* 4. Visual Opacity & Border Radius */}
-      <div className="space-y-2 pt-2 border-t border-slate-700/60">
+      {/* 5. Visual Opacity & Corner Radius */}
+      <div className="space-y-2 pt-3 border-t border-slate-800">
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-slate-400">Opacity ({Math.round((field.opacity ?? 1) * 100)}%)</span>
           <input
@@ -439,6 +602,31 @@ export function FieldPropertiesPanel({
           </div>
         )}
       </div>
+
+      {/* 6. Quick Jump to Other Elements */}
+      {fields.length > 1 && onSelectField && (
+        <div className="space-y-2 pt-3 border-t border-slate-800">
+          <div className="flex items-center justify-between text-[10px] text-slate-400">
+            <span>Switch to Another Element:</span>
+          </div>
+          <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
+            {fields.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => onSelectField(f.id)}
+                className={`px-2 py-1 rounded text-[10px] border transition-colors ${
+                  f.id === field.id
+                    ? "bg-[#C8A84E] text-slate-950 font-bold border-[#C8A84E]"
+                    : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
+                }`}
+              >
+                {f.label || f.id}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
