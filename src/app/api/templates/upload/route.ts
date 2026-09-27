@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { uploadTemplateBackgroundToCloudinary } from "@/lib/cloudinary";
+
 
 export const dynamic = "force-dynamic";
 
@@ -98,23 +100,31 @@ export async function POST(req: NextRequest) {
     // 5. Generate Non-Guessable Sanitized Filename (Cryptographic UUID)
     const safeName = `template_bg_${Date.now()}_${crypto.randomUUID()}${ext}`;
 
-    // 6. Generate Base64 Data URI (Universally portable & serverless-resilient)
+    // 6. Generate Base64 Data URI (Instant preview & fallback)
     const dataUri = `data:${mimeType};base64,${buffer.toString("base64")}`;
     let publicUrl = dataUri;
+    let storageProvider = "data_uri";
 
-    // 7. Attempt local filesystem storage if directory is writable (Local Dev), fallback to Data URI in Serverless
+    // 7. Primary Persistent Cloud Storage: Cloudinary CDN
     try {
-      const uploadsDir = path.join(process.cwd(), "public", "uploads", "templates");
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
+      const cld = await uploadTemplateBackgroundToCloudinary(buffer, safeName);
+      publicUrl = cld.secure_url;
+      storageProvider = "cloudinary";
+    } catch (cldErr) {
+      console.warn("[Upload] Cloudinary upload fallback, attempting local storage:", cldErr);
+      try {
+        const uploadsDir = path.join(process.cwd(), "public", "uploads", "templates");
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+        const filePath = path.join(uploadsDir, safeName);
+        fs.writeFileSync(filePath, buffer);
+        publicUrl = `/uploads/templates/${safeName}`;
+        storageProvider = "local_filesystem";
+      } catch {
+        publicUrl = dataUri;
+        storageProvider = "data_uri_fallback";
       }
-      const filePath = path.join(uploadsDir, safeName);
-      fs.writeFileSync(filePath, buffer);
-      publicUrl = `/uploads/templates/${safeName}`;
-    } catch {
-      // Running in read-only serverless runtime (e.g. AWS Lambda / Vercel).
-      // Data URI is used as primary URL, guaranteeing zero-latency rendering and full persistence.
-      publicUrl = dataUri;
     }
 
     return NextResponse.json({
@@ -122,6 +132,7 @@ export async function POST(req: NextRequest) {
       url: publicUrl,
       dataUri,
       fileName: safeName,
+      storage: storageProvider,
     });
   } catch (err: any) {
     console.error("Template upload error:", err);

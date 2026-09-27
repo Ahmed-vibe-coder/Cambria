@@ -4,7 +4,9 @@ import { generateQrDataUri } from "@/lib/renderer/generate-qr";
 import { TemplateLayout } from "@/types/database";
 import { chromium as playwrightChromium } from "playwright";
 import { getAppBaseUrl } from "@/lib/utils";
+import { uploadDocumentToCloudinary } from "@/lib/cloudinary";
 import fs from "fs";
+
 import path from "path";
 
 // Extended timeout for Chromium PDF rendering
@@ -86,11 +88,34 @@ export async function POST(req: NextRequest) {
     const pdfFileName = `${filePrefix}_v${Date.now()}.pdf`;
     const thumbFileName = `${filePrefix}_v${Date.now()}.png`;
 
-    const pdfFilePath = path.join(docsDir, pdfFileName);
-    const thumbFilePath = path.join(docsDir, thumbFileName);
+    // 6. Upload Generated Artifacts to Cloudinary (Permanent Cloud Storage)
+    let cloudinaryPdfUrl: string | null = null;
+    let cloudinaryThumbUrl: string | null = null;
 
-    fs.writeFileSync(pdfFilePath, pdfBuffer);
-    fs.writeFileSync(thumbFilePath, thumbnailBuffer);
+    try {
+      const [cldPdf, cldThumb] = await Promise.all([
+        uploadDocumentToCloudinary(pdfBuffer, pdfFileName, true),
+        uploadDocumentToCloudinary(thumbnailBuffer, thumbFileName, false),
+      ]);
+      cloudinaryPdfUrl = cldPdf.secure_url;
+      cloudinaryThumbUrl = cldThumb.secure_url;
+    } catch (cldErr) {
+      console.warn("[Render] Cloudinary artifact upload fallback to local storage:", cldErr);
+    }
+
+    // 7. Attempt local private storage if writable (Local Dev)
+    try {
+      const docsDir = path.join(process.cwd(), "data", "documents");
+      if (!fs.existsSync(docsDir)) {
+        fs.mkdirSync(docsDir, { recursive: true });
+      }
+      const pdfFilePath = path.join(docsDir, pdfFileName);
+      const thumbFilePath = path.join(docsDir, thumbFileName);
+      fs.writeFileSync(pdfFilePath, pdfBuffer);
+      fs.writeFileSync(thumbFilePath, thumbnailBuffer);
+    } catch {
+      // Serverless read-only mode - artifacts persisted on Cloudinary
+    }
 
     // Gated Route URL (no direct public folder exposure)
     const token = studentData.verification_token;
@@ -101,6 +126,8 @@ export async function POST(req: NextRequest) {
       success: true,
       filePath: gatedPdfUrl,
       thumbnailPath: gatedThumbUrl,
+      cloudinaryPdfUrl,
+      cloudinaryThumbUrl,
       fileSizeBytes: pdfBuffer.length,
     });
   } catch (error: any) {
