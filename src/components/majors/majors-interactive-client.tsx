@@ -62,9 +62,6 @@ import {
   List,
   ArrowRight,
   CheckCircle2,
-  MapPin,
-  Mail,
-  Phone,
   Clock,
   Award,
   ChevronRight,
@@ -787,85 +784,7 @@ export function MajorsInteractiveClient() {
         </Container>
       </section>
 
-      {/* 4. OFFICIAL LONDON CAMPUS & LOCATION LIAISON STRIP */}
-      {/* (Fulfilling the exact address from prompt: 128 City Road, London, United Kingdom, EC1V 2NX) */}
-      <section className="bg-slate-50 border-t border-slate-200 py-12">
-        <Container>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-            {/* Campus Address Card */}
-            <div className="bg-white border border-slate-200 rounded-[8px] p-6 shadow-xs space-y-3">
-              <div className="w-10 h-10 rounded-[6px] bg-cambria-soft text-cambria-navy flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-cambria-academic" />
-              </div>
-              <h4 className="font-serif text-lg font-bold text-cambria-navy">
-                London Headquarters
-              </h4>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                <strong>Cambria International College</strong>
-                <br />
-                128 City Road, London, United Kingdom, EC1V 2NX
-              </p>
-              <div className="pt-2">
-                <a
-                  href="https://maps.google.com/?q=128+City+Road,+London,+EC1V+2NX"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-cambria-academic font-semibold hover:underline inline-flex items-center gap-1"
-                >
-                  View on Official Map
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </a>
-              </div>
-            </div>
-
-            {/* Direct Academic Contact */}
-            <div className="bg-white border border-slate-200 rounded-[8px] p-6 shadow-xs space-y-3">
-              <div className="w-10 h-10 rounded-[6px] bg-cambria-soft text-cambria-navy flex items-center justify-center">
-                <Mail className="w-5 h-5 text-cambria-academic" />
-              </div>
-              <h4 className="font-serif text-lg font-bold text-cambria-navy">
-                Admissions & Registrar
-              </h4>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Direct queries regarding candidate admission, syllabus evaluation, and transcript records:
-              </p>
-              <div className="space-y-1 text-xs">
-                <div className="font-semibold text-cambria-navy">
-                  Email: <span className="font-normal text-slate-600">registrar@cambria.edu</span>
-                </div>
-                <div className="font-semibold text-cambria-navy">
-                  Hours: <span className="font-normal text-slate-600">Mon - Fri, 09:00 - 17:00 GMT</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Credential Verification Notice */}
-            <div className="bg-white border border-slate-200 rounded-[8px] p-6 shadow-xs space-y-3">
-              <div className="w-10 h-10 rounded-[6px] bg-cambria-soft text-cambria-navy flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 text-emerald-600" />
-              </div>
-              <h4 className="font-serif text-lg font-bold text-cambria-navy">
-                Cryptographic Verification
-              </h4>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Every graduate receiving a degree or diploma within any of our 45+ majors is issued an
-                online verifiable cryptographic token resolvable 24/7.
-              </p>
-              <div className="pt-2">
-                <Link
-                  href="/verify"
-                  className="text-xs text-cambria-navy font-bold hover:text-cambria-academic inline-flex items-center gap-1"
-                >
-                  Verify a Graduate Credential
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* 5. MAJOR DETAILS MODAL / DIALOG */}
+      {/* 4. MAJOR DETAILS MODAL / DIALOG */}
       {activeModalMajor && (
         <div
           role="dialog"
