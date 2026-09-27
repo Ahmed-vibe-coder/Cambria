@@ -4,8 +4,7 @@
 -- Generated for Supabase Cloud Database Provisioning
 -- ============================================================================
 
--- Disable triggers temporarily during bulk insert
-SET session_replication_role = 'replica';
+-- SET session_replication_role = 'replica'; -- Not needed and requires superuser on Supabase Cloud
 
 -- ----------------------------------------------------------------------------
 -- Table: programs (4 rows)
@@ -298,7 +297,6 @@ BEGIN
   END IF;
 END $$;
 
--- Re-enable triggers
-SET session_replication_role = 'origin';
+-- SET session_replication_role = 'origin';
 
 -- End of seed.sql
