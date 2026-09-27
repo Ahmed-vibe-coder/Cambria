@@ -213,7 +213,7 @@ export function generateDocumentHtml(payload: RenderPayload): string {
   }
 
   <!-- DYNAMIC OVERLAY FIELDS DEFINED IN TEMPLATE JSON -->
-  ${layout.fields
+  ${(layout.fields || [])
     .map((field) => {
       let content = field.staticText || "";
       if (field.contentKey) {

@@ -191,7 +191,12 @@ async function triggerRenderForDocument(
           program_name_en: program.name,
           credential_number: cred.credential_number,
         },
-        "admin@cambria.edu"
+        "admin@cambria.edu",
+        data.fileSizeBytes,
+        data.cloudinaryPdfUrl,
+        data.cloudinaryThumbUrl,
+        data.cloudinaryPdfPublicId,
+        data.cloudinaryThumbPublicId
       );
     }
   } catch (err) {

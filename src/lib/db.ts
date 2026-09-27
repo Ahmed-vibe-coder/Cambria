@@ -911,14 +911,23 @@ export async function saveDocumentVersion(
         version_number?: number;
         file_path: string;
         thumbnail_path?: string;
+        cloudinary_public_id?: string | null;
+        cloudinary_url?: string | null;
+        cloudinary_thumb_public_id?: string | null;
+        cloudinary_thumb_url?: string | null;
         metadata_snapshot: any;
         generated_by?: string;
-        file_size_bytes?: number;
-        sha256_hash?: string;
+        file_size_bytes?: number | null;
+        sha256_hash?: string | null;
       },
   thumbnailPath?: string,
   metadataSnapshot?: any,
-  generatedBy?: string
+  generatedBy?: string,
+  fileSizeBytes?: number | null,
+  cloudinaryPdfUrl?: string | null,
+  cloudinaryThumbUrl?: string | null,
+  cloudinaryPdfPublicId?: string | null,
+  cloudinaryThumbPublicId?: string | null
 ): Promise<DocumentVersion> {
   let filePath: string;
   let thumb: string | null = null;
@@ -927,6 +936,10 @@ export async function saveDocumentVersion(
   let sizeBytes: number | null = null;
   let hash: string | null = null;
   let verNum = 1;
+  let cldPdfUrl: string | null = null;
+  let cldThumbUrl: string | null = null;
+  let cldPdfPublicId: string | null = null;
+  let cldThumbPublicId: string | null = null;
 
   if (typeof filePathOrData === "object" && filePathOrData !== null) {
     filePath = filePathOrData.file_path;
@@ -936,11 +949,20 @@ export async function saveDocumentVersion(
     sizeBytes = filePathOrData.file_size_bytes || null;
     hash = filePathOrData.sha256_hash || null;
     verNum = filePathOrData.version_number || 1;
+    cldPdfUrl = filePathOrData.cloudinary_url || null;
+    cldThumbUrl = filePathOrData.cloudinary_thumb_url || null;
+    cldPdfPublicId = filePathOrData.cloudinary_public_id || null;
+    cldThumbPublicId = filePathOrData.cloudinary_thumb_public_id || null;
   } else {
     filePath = filePathOrData;
     thumb = thumbnailPath || null;
     meta = metadataSnapshot || {};
     genBy = generatedBy || null;
+    sizeBytes = fileSizeBytes || null;
+    cldPdfUrl = cloudinaryPdfUrl || null;
+    cldThumbUrl = cloudinaryThumbUrl || null;
+    cldPdfPublicId = cloudinaryPdfPublicId || null;
+    cldThumbPublicId = cloudinaryThumbPublicId || null;
   }
 
   const newVer: DocumentVersion = {
@@ -949,6 +971,10 @@ export async function saveDocumentVersion(
     version_number: verNum,
     file_path: filePath,
     thumbnail_path: thumb,
+    cloudinary_public_id: cldPdfPublicId,
+    cloudinary_url: cldPdfUrl,
+    cloudinary_thumb_public_id: cldThumbPublicId,
+    cloudinary_thumb_url: cldThumbUrl,
     metadata_snapshot: meta,
     generated_by: genBy,
     generated_at: new Date().toISOString(),
@@ -966,12 +992,33 @@ export async function saveDocumentVersion(
           current_version_id: newVer.id,
           file_path: newVer.file_path,
           thumbnail_path: newVer.thumbnail_path,
+          cloudinary_public_id: newVer.cloudinary_public_id,
+          cloudinary_url: newVer.cloudinary_url,
+          cloudinary_thumb_public_id: newVer.cloudinary_thumb_public_id,
+          cloudinary_thumb_url: newVer.cloudinary_thumb_url,
           updated_at: new Date().toISOString(),
         })
         .eq("id", credentialDocumentId);
-      return newVer;
     } catch (err) {
       console.warn("[DB] Supabase saveDocumentVersion error:", err);
+    }
+  }
+
+  // Update in-memory fallback cache
+  for (const cred of memoryCredentials) {
+    const doc = cred.documents?.find((d) => d.id === credentialDocumentId);
+    if (doc) {
+      doc.current_version_id = newVer.id;
+      doc.file_path = newVer.file_path;
+      doc.thumbnail_path = newVer.thumbnail_path;
+      doc.cloudinary_public_id = newVer.cloudinary_public_id;
+      doc.cloudinary_url = newVer.cloudinary_url;
+      doc.cloudinary_thumb_public_id = newVer.cloudinary_thumb_public_id;
+      doc.cloudinary_thumb_url = newVer.cloudinary_thumb_url;
+      doc.current_version = newVer;
+      if (!doc.versions) doc.versions = [];
+      doc.versions.unshift(newVer);
+      break;
     }
   }
 
@@ -1040,7 +1087,7 @@ export async function getPublicVerification(
 
   // Gated URLs: Never serve from /public/ web root. Always route through gated Route Handler.
   const docs = (cred.documents || [])
-    .filter((d) => d.file_path)
+    .filter((d) => d.file_path || d.cloudinary_url || d.current_version?.cloudinary_url)
     .map((d) => ({
       document_type: d.document_type,
       file_path: `/api/documents/${cred!.verification_token}/${d.document_type}`,

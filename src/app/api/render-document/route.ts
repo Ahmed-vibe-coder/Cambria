@@ -4,10 +4,8 @@ import { generateQrDataUri } from "@/lib/renderer/generate-qr";
 import { TemplateLayout } from "@/types/database";
 import { chromium as playwrightChromium } from "playwright";
 import { getAppBaseUrl } from "@/lib/utils";
-import { uploadDocumentToCloudinary } from "@/lib/cloudinary";
-import fs from "fs";
+import { uploadDocumentArtifact } from "@/lib/storage/cloudinary";
 
-import path from "path";
 
 // Extended timeout for Chromium PDF rendering
 export const maxDuration = 60;
@@ -78,43 +76,31 @@ export async function POST(req: NextRequest) {
 
     await browser.close();
 
-    // 6. Ensure private data/documents directory exists and persist artifacts
-    const docsDir = path.join(process.cwd(), "data", "documents");
-    if (!fs.existsSync(docsDir)) {
-      fs.mkdirSync(docsDir, { recursive: true });
-    }
-
-    const filePrefix = `${studentData.credential_number}_${layout.template_kind}`;
-    const pdfFileName = `${filePrefix}_v${Date.now()}.pdf`;
-    const thumbFileName = `${filePrefix}_v${Date.now()}.png`;
-
-    // 6. Upload Generated Artifacts to Cloudinary (Permanent Cloud Storage)
+    // 6. Upload Generated In-Memory Buffers directly to Cloudinary (Zero Local Disk Writes)
     let cloudinaryPdfUrl: string | null = null;
     let cloudinaryThumbUrl: string | null = null;
+    let cloudinaryPdfPublicId: string | null = null;
+    let cloudinaryThumbPublicId: string | null = null;
 
     try {
       const [cldPdf, cldThumb] = await Promise.all([
-        uploadDocumentToCloudinary(pdfBuffer, pdfFileName, true),
-        uploadDocumentToCloudinary(thumbnailBuffer, thumbFileName, false),
+        uploadDocumentArtifact(pdfBuffer, {
+          credentialNumber: studentData.credential_number,
+          documentType: layout.template_kind,
+          isPdf: true,
+        }),
+        uploadDocumentArtifact(thumbnailBuffer, {
+          credentialNumber: studentData.credential_number,
+          documentType: layout.template_kind,
+          isPdf: false,
+        }),
       ]);
       cloudinaryPdfUrl = cldPdf.secure_url;
       cloudinaryThumbUrl = cldThumb.secure_url;
+      cloudinaryPdfPublicId = cldPdf.public_id;
+      cloudinaryThumbPublicId = cldThumb.public_id;
     } catch (cldErr) {
-      console.warn("[Render] Cloudinary artifact upload fallback to local storage:", cldErr);
-    }
-
-    // 7. Attempt local private storage if writable (Local Dev)
-    try {
-      const docsDir = path.join(process.cwd(), "data", "documents");
-      if (!fs.existsSync(docsDir)) {
-        fs.mkdirSync(docsDir, { recursive: true });
-      }
-      const pdfFilePath = path.join(docsDir, pdfFileName);
-      const thumbFilePath = path.join(docsDir, thumbFileName);
-      fs.writeFileSync(pdfFilePath, pdfBuffer);
-      fs.writeFileSync(thumbFilePath, thumbnailBuffer);
-    } catch {
-      // Serverless read-only mode - artifacts persisted on Cloudinary
+      console.warn("[Render] Cloudinary artifact upload error:", cldErr);
     }
 
     // Gated Route URL (no direct public folder exposure)
@@ -128,6 +114,8 @@ export async function POST(req: NextRequest) {
       thumbnailPath: gatedThumbUrl,
       cloudinaryPdfUrl,
       cloudinaryThumbUrl,
+      cloudinaryPdfPublicId,
+      cloudinaryThumbPublicId,
       fileSizeBytes: pdfBuffer.length,
     });
   } catch (error: any) {

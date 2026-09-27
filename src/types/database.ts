@@ -94,6 +94,10 @@ export interface CredentialDocument {
   current_version_id?: string | null;
   file_path?: string | null;
   thumbnail_path?: string | null;
+  cloudinary_public_id?: string | null;
+  cloudinary_url?: string | null;
+  cloudinary_thumb_public_id?: string | null;
+  cloudinary_thumb_url?: string | null;
   created_at: string;
   updated_at: string;
 
@@ -109,6 +113,10 @@ export interface DocumentVersion {
   version_number: number;
   file_path: string;
   thumbnail_path?: string | null;
+  cloudinary_public_id?: string | null;
+  cloudinary_url?: string | null;
+  cloudinary_thumb_public_id?: string | null;
+  cloudinary_thumb_url?: string | null;
   metadata_snapshot: Record<string, any>;
   generated_by?: string | null;
   generated_at: string;

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 import crypto from "crypto";
-import { uploadTemplateBackgroundToCloudinary } from "@/lib/cloudinary";
-
+import { uploadTemplateBackground } from "@/lib/storage/cloudinary";
 
 export const dynamic = "force-dynamic";
 
@@ -104,27 +101,18 @@ export async function POST(req: NextRequest) {
     const dataUri = `data:${mimeType};base64,${buffer.toString("base64")}`;
     let publicUrl = dataUri;
     let storageProvider = "data_uri";
+    let cloudinaryPublicId: string | null = null;
 
     // 7. Primary Persistent Cloud Storage: Cloudinary CDN
     try {
-      const cld = await uploadTemplateBackgroundToCloudinary(buffer, safeName);
+      const cld = await uploadTemplateBackground(buffer, safeName);
       publicUrl = cld.secure_url;
+      cloudinaryPublicId = cld.public_id;
       storageProvider = "cloudinary";
     } catch (cldErr) {
-      console.warn("[Upload] Cloudinary upload fallback, attempting local storage:", cldErr);
-      try {
-        const uploadsDir = path.join(process.cwd(), "public", "uploads", "templates");
-        if (!fs.existsSync(uploadsDir)) {
-          fs.mkdirSync(uploadsDir, { recursive: true });
-        }
-        const filePath = path.join(uploadsDir, safeName);
-        fs.writeFileSync(filePath, buffer);
-        publicUrl = `/uploads/templates/${safeName}`;
-        storageProvider = "local_filesystem";
-      } catch {
-        publicUrl = dataUri;
-        storageProvider = "data_uri_fallback";
-      }
+      console.warn("[Upload] Cloudinary upload fallback to data URI:", cldErr);
+      publicUrl = dataUri;
+      storageProvider = "data_uri_fallback";
     }
 
     return NextResponse.json({
@@ -132,6 +120,7 @@ export async function POST(req: NextRequest) {
       url: publicUrl,
       dataUri,
       fileName: safeName,
+      publicId: cloudinaryPublicId,
       storage: storageProvider,
     });
   } catch (err: any) {

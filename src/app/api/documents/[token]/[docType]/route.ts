@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import { getCredentialByToken } from "@/lib/db";
+import { fetchAssetBuffer, getSignedDeliveryUrl } from "@/lib/storage/cloudinary";
 
 export const dynamic = "force-dynamic";
 
@@ -16,11 +17,12 @@ interface RouteParams {
  * GATED CREDENTIAL DOCUMENT STREAMING ENDPOINT
  * 
  * Strict Security Invariants:
- * 1. Never serves files from public/ web root.
+ * 1. Never exposes naked Cloudinary or storage URLs to the client.
  * 2. On EVERY request, queries live PostgreSQL status of the credential.
  * 3. If credential status is 'revoked' -> STRICT 403 FORBIDDEN.
  * 4. If credential status is 'suspended' -> STRICT 403 FORBIDDEN.
- * 5. If active/valid -> Streams binary PDF or PNG thumbnail directly from private storage.
+ * 5. If active/valid -> Streams binary PDF or PNG thumbnail directly from Cloudinary
+ *    or private storage with strict no-cache headers.
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
@@ -92,18 +94,58 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       (d) => d.document_type === docType
     );
 
+    const contentType = isThumb ? "image/png" : "application/pdf";
+    const filename = `${credential.credential_number}_${docType}.${isThumb ? "png" : "pdf"}`;
+    const responseHeaders = {
+      "Content-Type": contentType,
+      "Content-Disposition": `inline; filename="${filename}"`,
+      "Cache-Control": "private, no-cache, no-store, must-revalidate",
+      "X-Credential-Status": credential.status,
+    };
+
+    // 4. Primary: Stream directly from Cloudinary (Serverless-Safe Persistent Storage)
+    const cldUrl = isThumb
+      ? (docRecord?.cloudinary_thumb_url || docRecord?.current_version?.cloudinary_thumb_url)
+      : (docRecord?.cloudinary_url || docRecord?.current_version?.cloudinary_url);
+
+    const cldPublicId = isThumb
+      ? (docRecord?.cloudinary_thumb_public_id || docRecord?.current_version?.cloudinary_thumb_public_id)
+      : (docRecord?.cloudinary_public_id || docRecord?.current_version?.cloudinary_public_id);
+
+    if (cldUrl || cldPublicId) {
+      try {
+        let fetchUrl = cldUrl;
+        if (!fetchUrl && cldPublicId) {
+          fetchUrl = getSignedDeliveryUrl(cldPublicId, {
+            resourceType: isThumb ? "image" : "raw",
+            expiresInSeconds: 60,
+          });
+        }
+
+        if (fetchUrl) {
+          const buffer = await fetchAssetBuffer(fetchUrl);
+          return new NextResponse(new Uint8Array(buffer), {
+            status: 200,
+            headers: responseHeaders,
+          });
+        }
+      } catch (cldFetchErr) {
+        console.warn("[GatedStream] Failed to stream from Cloudinary, trying local fallback:", cldFetchErr);
+      }
+    }
+
+    // 5. Fallback: Local filesystem (for local dev and pre-seeded documents)
     const docsDir = path.join(process.cwd(), "data", "documents");
 
-    // Resolve filename from DB record or convention
     let targetFileName = "";
     if (isThumb) {
-      if (docRecord?.thumbnail_path) {
+      if (docRecord?.thumbnail_path && !docRecord.thumbnail_path.startsWith("/api/")) {
         targetFileName = path.basename(docRecord.thumbnail_path);
       } else {
         targetFileName = docType === "certificate" ? "sample-cert-001.png" : "sample-card-001.png";
       }
     } else {
-      if (docRecord?.file_path) {
+      if (docRecord?.file_path && !docRecord.file_path.startsWith("/api/")) {
         targetFileName = path.basename(docRecord.file_path);
       } else {
         targetFileName = docType === "certificate" ? "sample-cert-001.pdf" : "sample-card-001.pdf";
@@ -112,40 +154,32 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     const filePath = path.join(docsDir, targetFileName);
 
-    if (!fs.existsSync(filePath)) {
-      // Fallback to sample document for seeded credentials
-      const fallbackName = isThumb
-        ? (docType === "certificate" ? "sample-cert-001.png" : "sample-card-001.png")
-        : (docType === "certificate" ? "sample-cert-001.pdf" : "sample-card-001.pdf");
-      const fallbackPath = path.join(docsDir, fallbackName);
-
-      if (!fs.existsSync(fallbackPath)) {
-        return NextResponse.json(
-          { error: "Requested document artifact is not available on storage." },
-          { status: 404 }
-        );
-      }
-
-      const fileBuffer = fs.readFileSync(fallbackPath);
-      return new NextResponse(fileBuffer, {
+    if (fs.existsSync(filePath)) {
+      const fileBuffer = fs.readFileSync(filePath);
+      return new NextResponse(new Uint8Array(fileBuffer), {
         status: 200,
-        headers: {
-          "Content-Type": isThumb ? "image/png" : "application/pdf",
-          "Content-Disposition": `inline; filename="${credential.credential_number}_${docType}.${isThumb ? "png" : "pdf"}"`,
-          "Cache-Control": "private, no-cache, no-store, must-revalidate",
-        },
+        headers: responseHeaders,
       });
     }
 
-    const fileBuffer = fs.readFileSync(filePath);
-    return new NextResponse(fileBuffer, {
-      status: 200,
-      headers: {
-        "Content-Type": isThumb ? "image/png" : "application/pdf",
-        "Content-Disposition": `inline; filename="${credential.credential_number}_${docType}.${isThumb ? "png" : "pdf"}"`,
-        "Cache-Control": "private, no-cache, no-store, must-revalidate",
-      },
-    });
+    // Try seeded sample fallback file
+    const fallbackName = isThumb
+      ? (docType === "certificate" ? "sample-cert-001.png" : "sample-card-001.png")
+      : (docType === "certificate" ? "sample-cert-001.pdf" : "sample-card-001.pdf");
+    const fallbackPath = path.join(docsDir, fallbackName);
+
+    if (fs.existsSync(fallbackPath)) {
+      const fileBuffer = fs.readFileSync(fallbackPath);
+      return new NextResponse(new Uint8Array(fileBuffer), {
+        status: 200,
+        headers: responseHeaders,
+      });
+    }
+
+    return NextResponse.json(
+      { error: "Requested document artifact is not available on storage." },
+      { status: 404 }
+    );
   } catch (error: any) {
     console.error("❌ Gated document access error:", error);
     return NextResponse.json(
