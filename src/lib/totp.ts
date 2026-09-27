@@ -21,10 +21,10 @@ export function generateTotpToken(secret: string): string {
  */
 export function verifyTotpToken(token: string, secret: string): boolean {
   if (!token || !secret) return false;
-  const clean = token.trim();
+  const clean = token.replace(/\D/g, "").trim();
   if (!/^\d{6}$/.test(clean)) return false;
   try {
-    const result = verifySync({ token: clean, secret, epochTolerance: 60 });
+    const result = verifySync({ token: clean, secret, epochTolerance: 240 });
     return Boolean(result && result.valid);
   } catch {
     return false;

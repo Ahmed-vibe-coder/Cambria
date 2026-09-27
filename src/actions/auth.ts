@@ -225,7 +225,8 @@ export async function loginAction(prevState: any, formData: FormData) {
 export async function verifyMfaAction(prevState: any, formData: FormData) {
   const { ip, userAgent } = await getSafeHeaders();
 
-  const code = (formData.get("code") as string)?.trim();
+  const rawCode = (formData.get("code") as string) || "";
+  const code = rawCode.replace(/\D/g, "").trim();
   const validated = mfaSchema.safeParse({ code });
 
   if (!validated.success) {

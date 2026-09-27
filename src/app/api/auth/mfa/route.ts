@@ -19,7 +19,8 @@ export async function POST(req: NextRequest) {
   const userAgent = req.headers.get("user-agent") || undefined;
 
   const body = await req.json().catch(() => ({}));
-  const code = (body.code || "").trim();
+  const rawCode = (body.code || "").toString();
+  const code = rawCode.replace(/\D/g, "").trim();
   const explicitEmail = body.email ? body.email.trim().toLowerCase() : null;
   const trustDevice = Boolean(body.trustDevice !== false); // default to true if not explicitly false
 

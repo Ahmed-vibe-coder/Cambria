@@ -40,7 +40,12 @@ export function MfaVerifyForm({
         {state?.error && (
           <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-[4px] text-xs text-rose-800 flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-rose-700 shrink-0 mt-0.5" />
-            <span>{state.error}</span>
+            <div className="space-y-1">
+              <span className="font-semibold block">{state.error}</span>
+              <span className="text-[11px] text-rose-700 block">
+                Make sure your phone&apos;s Date &amp; Time is set to <strong>Automatic Network Time</strong>, or scan the QR code above again.
+              </span>
+            </div>
           </div>
         )}
 
