@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
@@ -85,21 +86,35 @@ export default async function AdminSettingsPage() {
         {/* 2FA Enforcement Card */}
         <Card className="p-5 space-y-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            <Smartphone className="w-4 h-4 text-emerald-600" />
+            <Smartphone className="w-4 h-4 text-cambria-academic" />
             <span>MFA Enforcement</span>
           </div>
           <div>
-            <div className="text-xl font-bold text-emerald-700 flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-              <span>Enrolled & Active</span>
-            </div>
+            {(process.env.REQUIRE_ADMIN_MFA === "true" || process.env.MFA_REQUIRED === "true") && staffUser.mfa_enrolled ? (
+              <div className="text-xl font-bold text-emerald-700 flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <span>Enrolled & Active</span>
+              </div>
+            ) : (
+              <div className="text-xl font-bold text-slate-700 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-cambria-academic" />
+                <span>Optional / Standard</span>
+              </div>
+            )}
             <p className="text-xs text-slate-500 pt-1">
-              Time-Based One-Time Passcode (TOTP RFC 6238) active. Secrets are encrypted at rest with AES-256-GCM.
+              {(process.env.REQUIRE_ADMIN_MFA === "true" || process.env.MFA_REQUIRED === "true") && staffUser.mfa_enrolled
+                ? "Time-Based One-Time Passcode (TOTP RFC 6238) active. Secrets are encrypted at rest with AES-256-GCM."
+                : "Standard administrative password authentication active. Multi-factor authentication is optional."}
             </p>
           </div>
           <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-slate-400">Secret Rotation:</span>
-            <span className="text-emerald-700 font-semibold text-[11px]">Protected & Salted</span>
+            <span className="text-slate-400">Authenticator Setup:</span>
+            <Link
+              href="/admin/mfa?setup=true"
+              className="text-cambria-academic font-semibold text-[11px] hover:underline"
+            >
+              Manage Device
+            </Link>
           </div>
         </Card>
 

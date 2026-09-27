@@ -260,11 +260,11 @@ ON CONFLICT (id) DO NOTHING;
 -- Table: staff_users (2 rows)
 -- ----------------------------------------------------------------------------
 INSERT INTO public.staff_users (id, email, full_name, role, password_hash, mfa_secret, mfa_enrolled, created_at, updated_at)
-VALUES ('b5146f4a-4ba1-456f-9df5-90ca935d0f19', 'admin@cambria.edu', 'Chief Registrar', 'super_admin', 'scrypt:3686e1d838c8ae668fc4acbe869513a2:407fb0b14a9b59dcff05597eb329460fd66fd9f109fb86ac8ade486208037b715396499d572fbe22533fbf13811d64e636f2abcf7627f3be8ff5d84607ca7234', 'aes256gcm:54a552355d5542cf1d6d0e1c:fdfaad6188f459bf145231cb10db64d1:eac7c79588ca4dbaec8803c7bb8afbd2423ebed6dc21af145f94b3c0b84c86f7', true, '2026-09-26T11:08:52.112Z', '2026-09-26T11:08:52.112Z')
+VALUES ('b5146f4a-4ba1-456f-9df5-90ca935d0f19', 'admin@cambria.edu', 'Chief Registrar', 'super_admin', 'scrypt:3686e1d838c8ae668fc4acbe869513a2:407fb0b14a9b59dcff05597eb329460fd66fd9f109fb86ac8ade486208037b715396499d572fbe22533fbf13811d64e636f2abcf7627f3be8ff5d84607ca7234', 'aes256gcm:54a552355d5542cf1d6d0e1c:fdfaad6188f459bf145231cb10db64d1:eac7c79588ca4dbaec8803c7bb8afbd2423ebed6dc21af145f94b3c0b84c86f7', false, '2026-09-26T11:08:52.112Z', '2026-09-26T11:08:52.112Z')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.staff_users (id, email, full_name, role, password_hash, mfa_secret, mfa_enrolled, created_at, updated_at)
-VALUES ('e4fdf986-6596-4448-a2c5-8a7a3dd2eb60', 'compliance@cambria.edu', 'Compliance Officer', 'compliance', 'scrypt:365eddac0687b776551d9a9be119ded8:edda90291c2337d006d1851f0e6dbc3af3191347014ba2721d06d5e9438194fa86a511d5fa01122be1426de67434be18152f4c22d2bb8e7265961068fe22dfd6', 'aes256gcm:58f22a3c961940999e8ea037:c03c7bafea6697092ca44bc0f9182106:8d0e6784e5f000ed0161911a7fbf0e3ed1f8f0207ee8da27ce561648bcf8cd30', true, '2026-09-26T11:08:52.130Z', '2026-09-26T11:08:52.130Z')
+VALUES ('e4fdf986-6596-4448-a2c5-8a7a3dd2eb60', 'compliance@cambria.edu', 'Compliance Officer', 'compliance', 'scrypt:365eddac0687b776551d9a9be119ded8:edda90291c2337d006d1851f0e6dbc3af3191347014ba2721d06d5e9438194fa86a511d5fa01122be1426de67434be18152f4c22d2bb8e7265961068fe22dfd6', 'aes256gcm:58f22a3c961940999e8ea037:c03c7bafea6697092ca44bc0f9182106:8d0e6784e5f000ed0161911a7fbf0e3ed1f8f0207ee8da27ce561648bcf8cd30', false, '2026-09-26T11:08:52.130Z', '2026-09-26T11:08:52.130Z')
 ON CONFLICT (id) DO NOTHING;
 
 -- ----------------------------------------------------------------------------

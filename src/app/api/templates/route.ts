@@ -26,11 +26,12 @@ export async function POST(req: NextRequest) {
       req.cookies.getAll().find((c) => c.name.includes("-auth-token"));
 
     const hasSession = Boolean(sessionCookie?.value || supabaseCookie?.value);
-    const hasMfa = Boolean(mfaCookie?.value === "true" || supabaseCookie?.value);
+    const requireMfa = process.env.REQUIRE_ADMIN_MFA === "true" || process.env.MFA_REQUIRED === "true";
+    const hasMfa = requireMfa ? (mfaCookie?.value === "true") : true;
 
     if (!hasSession || !hasMfa) {
       return NextResponse.json(
-        { error: "Unauthorized: Active administrative MFA session required to create templates." },
+        { error: "Unauthorized: Active administrative session required to create templates." },
         { status: 401 }
       );
     }

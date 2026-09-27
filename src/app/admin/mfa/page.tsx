@@ -23,16 +23,31 @@ export default async function AdminMfaPage({ searchParams }: AdminMfaPageProps) 
   const cookieStore = await cookies();
   const pendingCookie = cookieStore.get("cambria_mfa_pending");
 
-  // If user hasn't passed password authentication, send back to login
-  if (!pendingCookie?.value) {
+  // Check pending MFA challenge or existing authenticated session
+  const sessionCookie = cookieStore.get("cambria_staff_session");
+  const supabaseCookie =
+    cookieStore.get("sb-access-token") ||
+    cookieStore.get("supabase-auth-token") ||
+    cookieStore.getAll().find((c) => c.name.includes("-auth-token"));
+
+  const hasSession = Boolean(sessionCookie?.value || supabaseCookie?.value);
+
+  if (!pendingCookie?.value && !hasSession) {
     redirect("/admin/login");
   }
 
   let email = "admin@cambria.edu";
-  try {
-    const data = JSON.parse(pendingCookie.value);
-    if (data.email) email = data.email;
-  } catch {}
+  if (pendingCookie?.value) {
+    try {
+      const data = JSON.parse(pendingCookie.value);
+      if (data.email) email = data.email;
+    } catch {}
+  } else if (sessionCookie?.value) {
+    try {
+      const data = JSON.parse(sessionCookie.value);
+      if (data.email) email = data.email;
+    } catch {}
+  }
 
   const staffUser = await getStaffUserByEmail(email);
   if (!staffUser) {
@@ -43,7 +58,8 @@ export default async function AdminMfaPage({ searchParams }: AdminMfaPageProps) 
   const isExplicitSetup =
     resolvedParams.setup === "true" ||
     resolvedParams.setup === "1" ||
-    resolvedParams.re_enroll === "true";
+    resolvedParams.re_enroll === "true" ||
+    (!pendingCookie?.value && hasSession);
 
   const isEnrolled = Boolean(staffUser.mfa_enrolled && staffUser.mfa_secret && !isExplicitSetup);
 

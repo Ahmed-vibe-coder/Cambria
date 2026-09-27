@@ -35,11 +35,12 @@ export async function PUT(
       req.cookies.getAll().find((c) => c.name.includes("-auth-token"));
 
     const hasSession = Boolean(sessionCookie?.value || supabaseCookie?.value);
-    const hasMfa = Boolean(mfaCookie?.value === "true" || supabaseCookie?.value);
+    const requireMfa = process.env.REQUIRE_ADMIN_MFA === "true" || process.env.MFA_REQUIRED === "true";
+    const hasMfa = requireMfa ? (mfaCookie?.value === "true") : true;
 
     if (!hasSession || !hasMfa) {
       return NextResponse.json(
-        { error: "Unauthorized: Active administrative MFA session required to update templates." },
+        { error: "Unauthorized: Active administrative session required to update templates." },
         { status: 401 }
       );
     }
@@ -79,11 +80,12 @@ export async function DELETE(
       req.cookies.getAll().find((c) => c.name.includes("-auth-token"));
 
     const hasSession = Boolean(sessionCookie?.value || supabaseCookie?.value);
-    const hasMfa = Boolean(mfaCookie?.value === "true" || supabaseCookie?.value);
+    const requireMfa = process.env.REQUIRE_ADMIN_MFA === "true" || process.env.MFA_REQUIRED === "true";
+    const hasMfa = requireMfa ? (mfaCookie?.value === "true") : true;
 
     if (!hasSession || !hasMfa) {
       return NextResponse.json(
-        { error: "Unauthorized: Active administrative MFA session required to delete templates." },
+        { error: "Unauthorized: Active administrative session required to delete templates." },
         { status: 401 }
       );
     }

@@ -22,7 +22,10 @@ export function middleware(request: NextRequest) {
       request.cookies.getAll().find((c) => c.name.includes("-auth-token"));
 
     const hasSession = Boolean(sessionCookie?.value || supabaseCookie?.value);
-    const hasMfa = Boolean(mfaCookie?.value === "true" || supabaseCookie?.value);
+    const requireMfa =
+      process.env.REQUIRE_ADMIN_MFA === "true" ||
+      process.env.MFA_REQUIRED === "true";
+    const hasMfa = requireMfa ? (mfaCookie?.value === "true") : true;
 
     if (!hasSession) {
       const loginUrl = new URL("/admin/login", request.url);
@@ -30,10 +33,23 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    if (!hasMfa) {
+    if (requireMfa && !hasMfa) {
       const mfaUrl = new URL("/admin/mfa", request.url);
       mfaUrl.searchParams.set("next", pathname);
       return NextResponse.redirect(mfaUrl);
+    }
+  }
+
+  // If already authenticated and accessing login page, forward directly to /admin
+  if (pathname === "/admin/login") {
+    const sessionCookie = request.cookies.get("cambria_staff_session");
+    const supabaseCookie =
+      request.cookies.get("sb-access-token") ||
+      request.cookies.get("supabase-auth-token") ||
+      request.cookies.getAll().find((c) => c.name.includes("-auth-token"));
+
+    if (sessionCookie?.value || supabaseCookie?.value) {
+      return NextResponse.redirect(new URL("/admin", request.url));
     }
   }
 

@@ -22,7 +22,18 @@ export default async function AdminLayout({
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get("cambria_staff_session");
   const mfaCookie = cookieStore.get("cambria_staff_mfa_verified");
-  const isAuthenticated = Boolean(sessionCookie?.value && mfaCookie?.value === "true");
+  const supabaseCookie =
+    cookieStore.get("sb-access-token") ||
+    cookieStore.get("supabase-auth-token") ||
+    cookieStore.getAll().find((c) => c.name.includes("-auth-token"));
+
+  const hasSession = Boolean(sessionCookie?.value || supabaseCookie?.value);
+  const requireMfa =
+    process.env.REQUIRE_ADMIN_MFA === "true" ||
+    process.env.MFA_REQUIRED === "true";
+  const hasMfa = requireMfa ? (mfaCookie?.value === "true") : true;
+
+  const isAuthenticated = Boolean(hasSession && hasMfa);
 
   // Pre-authentication views (login, mfa) render directly without dashboard chrome
   if (!isAuthenticated) {
