@@ -7,23 +7,26 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Award, ShieldCheck, AlertCircle, Info } from "lucide-react";
-import { Student, Program } from "@/types/database";
+import { Student, Program, Template } from "@/types/database";
 
 export default function NewCredentialPage() {
   const [state, formAction, isPending] = useActionState(createCredentialAction, null);
   const [students, setStudents] = useState<Student[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [resStudents, resPrograms] = await Promise.all([
+        const [resStudents, resPrograms, resTemplates] = await Promise.all([
           fetch("/api/admin-data?type=students").then((r) => r.json()),
           fetch("/api/admin-data?type=programs").then((r) => r.json()),
+          fetch("/api/admin-data?type=templates").then((r) => r.json()),
         ]);
         setStudents(resStudents || []);
         setPrograms(resPrograms || []);
+        setTemplates(resTemplates || []);
       } catch {
         // Fallback handled gracefully
       } finally {
@@ -166,12 +169,22 @@ export default function NewCredentialPage() {
             </div>
 
             {/* Document Generation Options */}
-            <div className="p-5 bg-slate-50 border border-slate-200 rounded-[6px] space-y-3">
-              <span className="text-xs uppercase tracking-wider font-semibold text-slate-700 block">
-                Generate Official Documents
-              </span>
+            <div className="p-5 bg-slate-50 border border-slate-200 rounded-[6px] space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase tracking-wider font-semibold text-slate-700 block">
+                  Generate Official Documents
+                </span>
+                <Link
+                  href="/admin/templates/new"
+                  target="_blank"
+                  className="text-xs text-cambria-navy hover:underline font-semibold"
+                >
+                  + Create New Template
+                </Link>
+              </div>
 
-              <div className="space-y-2.5">
+              {/* Certificate Template */}
+              <div className="space-y-2 p-3 bg-white border border-slate-200 rounded">
                 <label className="flex items-center gap-3 text-sm text-slate-800 cursor-pointer">
                   <input
                     type="checkbox"
@@ -180,10 +193,29 @@ export default function NewCredentialPage() {
                     className="w-4 h-4 rounded border-slate-300 text-cambria-navy focus:ring-cambria-academic"
                   />
                   <span>
-                    Generate <strong>Official Parchment Certificate</strong> (Landscape 1600x1131, Seal, English & Arabic text)
+                    Generate <strong>Official Certificate / Diploma</strong>
                   </span>
                 </label>
+                <div className="pl-7 space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-600 block">Certificate Design Template:</label>
+                  <select
+                    name="certificate_template_id"
+                    className="flex h-9 w-full rounded border border-slate-300 bg-white px-2.5 py-1 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cambria-academic"
+                  >
+                    {templates.filter((t) => t.template_kind === "certificate").map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} ({t.width}×{t.height}px) {t.is_active ? "— [Default]" : ""}
+                      </option>
+                    ))}
+                    {templates.filter((t) => t.template_kind === "certificate").length === 0 && (
+                      <option value="">Default Institutional Certificate (1600×1131)</option>
+                    )}
+                  </select>
+                </div>
+              </div>
 
+              {/* Student Card Template */}
+              <div className="space-y-2 p-3 bg-white border border-slate-200 rounded">
                 <label className="flex items-center gap-3 text-sm text-slate-800 cursor-pointer">
                   <input
                     type="checkbox"
@@ -192,9 +224,25 @@ export default function NewCredentialPage() {
                     className="w-4 h-4 rounded border-slate-300 text-cambria-navy focus:ring-cambria-academic"
                   />
                   <span>
-                    Generate <strong>Official Student Identification Card</strong> (Portrait CR80 600x900, QR capability code)
+                    Generate <strong>Official Student Identification Card</strong>
                   </span>
                 </label>
+                <div className="pl-7 space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-600 block">Student Card Design Template:</label>
+                  <select
+                    name="card_template_id"
+                    className="flex h-9 w-full rounded border border-slate-300 bg-white px-2.5 py-1 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cambria-academic"
+                  >
+                    {templates.filter((t) => t.template_kind === "student_card").map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} ({t.width}×{t.height}px) {t.is_active ? "— [Default]" : ""}
+                      </option>
+                    ))}
+                    {templates.filter((t) => t.template_kind === "student_card").length === 0 && (
+                      <option value="">Default Student ID Card (600×900)</option>
+                    )}
+                  </select>
+                </div>
               </div>
             </div>
 

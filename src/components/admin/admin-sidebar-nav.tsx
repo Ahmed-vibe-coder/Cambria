@@ -10,6 +10,7 @@ import {
   GraduationCap,
   Award,
   FileText,
+  Layers,
   History,
   ShieldCheck,
 } from "lucide-react";
@@ -23,6 +24,7 @@ interface NavItem {
 const sidebarLinks: NavItem[] = [
   { href: "/admin", label: "Dashboard Overview", icon: LayoutDashboard },
   { href: "/admin/credentials", label: "Credentials Registry", icon: Award },
+  { href: "/admin/templates", label: "Design Templates", icon: Layers },
   { href: "/admin/students", label: "Students Directory", icon: Users },
   { href: "/admin/programs", label: "Academic Programs", icon: GraduationCap },
   { href: "/admin/documents", label: "Document Gallery", icon: FileText },

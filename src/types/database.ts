@@ -154,6 +154,7 @@ export interface PublicVerificationResult {
 
 export interface TemplateField {
   id: string;
+  label?: string;
   type: "text" | "qr" | "image" | "badge" | "date";
   x: number;
   y: number;
@@ -168,13 +169,17 @@ export interface TemplateField {
   contentKey?: string;
   staticText?: string;
   format?: string;
+  opacity?: number;
+  borderRadius?: number;
+  letterSpacing?: string;
+  lineHeight?: number;
 }
 
 export interface TemplateLayout {
   template_kind: TemplateKind;
   width: number;
   height: number;
-  background_image_url?: string;
+  background_image_url?: string | null;
   background_color?: string;
   fields: TemplateField[];
 }

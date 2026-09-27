@@ -10,6 +10,7 @@ import {
   transitionCredentialStatus,
   saveDocumentVersion,
   getTemplateByKind,
+  getTemplateById,
   getStudentById,
   getProgramById,
   addAuditLog,
@@ -23,6 +24,8 @@ const createCredentialSchema = z.object({
   expiry_date: z.string().optional().nullable(),
   generate_certificate: z.boolean(),
   generate_student_card: z.boolean(),
+  certificate_template_id: z.string().optional().nullable(),
+  card_template_id: z.string().optional().nullable(),
   notes: z.string().optional(),
 });
 
@@ -141,7 +144,10 @@ async function triggerRenderForDocument(
   program: any,
   documentType: DocumentType
 ) {
-  const template = await getTemplateByKind(documentType);
+  const credDoc = cred.documents?.find((d: any) => d.id === credDocId);
+  const template = credDoc?.template_id
+    ? (await getTemplateById(credDoc.template_id)) || (await getTemplateByKind(documentType))
+    : await getTemplateByKind(documentType);
   if (!template) return;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -157,9 +163,13 @@ async function triggerRenderForDocument(
           student_name_en: student.full_name_en,
           student_name_ar: student.full_name_ar,
           program_name_en: program.name,
+          program_name_ar: program.name_ar || program.name,
           credential_number: cred.credential_number,
+          student_id_number: student.student_id_number,
           verification_token: cred.verification_token,
           issue_date: cred.issue_date,
+          expiry_date: cred.expiry_date,
+          degree_level: program.degree_level,
         },
         baseUrl,
       }),

@@ -30,6 +30,7 @@ let memoryCredentials = [...FALLBACK_CREDENTIALS];
 let memoryStudents = [...FALLBACK_STUDENTS];
 let memoryPrograms = [...FALLBACK_PROGRAMS];
 let memoryAuditLogs = [...FALLBACK_AUDIT_LOGS];
+let memoryTemplates: Template[] = [...FALLBACK_TEMPLATES];
 let memoryTrustedDevices: TrustedDevice[] = [];
 
 function getSupabase() {
@@ -314,17 +315,36 @@ export async function getTemplates(): Promise<Template[]> {
       const { data, error } = await supabase
         .from("templates")
         .select("*")
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false });
       if (!error && data && data.length > 0) return data as Template[];
     } catch (err) {
       console.warn("[DB] Supabase getTemplates failed, using fallback:", err);
     }
   }
 
-  const pgRows = await db.query<Template>(`SELECT * FROM templates ORDER BY created_at ASC;`);
+  const pgRows = await db.query<Template>(`SELECT * FROM templates ORDER BY created_at DESC;`);
   if (pgRows && pgRows.length > 0) return pgRows;
 
-  return FALLBACK_TEMPLATES;
+  return memoryTemplates;
+}
+
+export async function getTemplateById(id: string): Promise<Template | null> {
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("templates")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      if (!error && data) return data as Template;
+    } catch (err) {
+      console.warn("[DB] Supabase getTemplateById error:", err);
+    }
+  }
+
+  const templates = await getTemplates();
+  return templates.find((t) => t.id === id) || null;
 }
 
 export async function getTemplateByKind(
@@ -346,7 +366,197 @@ export async function getTemplateByKind(
   }
 
   const templates = await getTemplates();
-  return templates.find((t) => t.template_kind === kind && t.is_active) || null;
+  return templates.find((t) => t.template_kind === kind && t.is_active) || templates.find((t) => t.template_kind === kind) || null;
+}
+
+export async function createTemplate(
+  input: Omit<Template, "created_at" | "updated_at">
+): Promise<Template> {
+  const now = new Date().toISOString();
+  const template: Template = {
+    ...input,
+    id: input.id || crypto.randomUUID(),
+    created_at: now,
+    updated_at: now,
+  };
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      await supabase.from("templates").insert({
+        id: template.id,
+        code: template.code,
+        name: template.name,
+        template_kind: template.template_kind,
+        width: template.width,
+        height: template.height,
+        background_image_url: template.background_image_url,
+        layout_schema: template.layout_schema,
+        is_active: template.is_active,
+        created_at: template.created_at,
+        updated_at: template.updated_at,
+      });
+    } catch (err) {
+      console.warn("[DB] Supabase createTemplate error:", err);
+    }
+  }
+
+  try {
+    await db.query(
+      `INSERT INTO templates (id, code, name, template_kind, width, height, background_image_url, layout_schema, is_active, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       ON CONFLICT (id) DO UPDATE SET
+         name = EXCLUDED.name,
+         layout_schema = EXCLUDED.layout_schema,
+         updated_at = EXCLUDED.updated_at;`,
+      [
+        template.id,
+        template.code,
+        template.name,
+        template.template_kind,
+        template.width,
+        template.height,
+        template.background_image_url || null,
+        JSON.stringify(template.layout_schema),
+        template.is_active,
+        template.created_at,
+        template.updated_at,
+      ]
+    );
+  } catch (err) {
+    console.warn("[DB] PGlite createTemplate error:", err);
+  }
+
+  // Update memory state
+  memoryTemplates.unshift(template);
+  return template;
+}
+
+export async function updateTemplate(
+  id: string,
+  input: Partial<Template>
+): Promise<Template | null> {
+  const existing = await getTemplateById(id);
+  if (!existing) return null;
+
+  const now = new Date().toISOString();
+  const updated: Template = {
+    ...existing,
+    ...input,
+    id,
+    updated_at: now,
+  };
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      await supabase
+        .from("templates")
+        .update({
+          ...input,
+          updated_at: now,
+        })
+        .eq("id", id);
+    } catch (err) {
+      console.warn("[DB] Supabase updateTemplate error:", err);
+    }
+  }
+
+  try {
+    await db.query(
+      `UPDATE templates SET
+         code = COALESCE($2, code),
+         name = COALESCE($3, name),
+         template_kind = COALESCE($4, template_kind),
+         width = COALESCE($5, width),
+         height = COALESCE($6, height),
+         background_image_url = $7,
+         layout_schema = COALESCE($8, layout_schema),
+         is_active = COALESCE($9, is_active),
+         updated_at = $10
+       WHERE id = $1;`,
+      [
+        id,
+        updated.code,
+        updated.name,
+        updated.template_kind,
+        updated.width,
+        updated.height,
+        updated.background_image_url || null,
+        JSON.stringify(updated.layout_schema),
+        updated.is_active,
+        updated.updated_at,
+      ]
+    );
+  } catch (err) {
+    console.warn("[DB] PGlite updateTemplate error:", err);
+  }
+
+  const idx = memoryTemplates.findIndex((t) => t.id === id);
+  if (idx !== -1) {
+    memoryTemplates[idx] = updated;
+  } else {
+    memoryTemplates.unshift(updated);
+  }
+
+  return updated;
+}
+
+export async function deleteTemplate(id: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      await supabase.from("templates").delete().eq("id", id);
+    } catch (err) {
+      console.warn("[DB] Supabase deleteTemplate error:", err);
+    }
+  }
+
+  try {
+    await db.query(`DELETE FROM templates WHERE id = $1;`, [id]);
+  } catch (err) {
+    console.warn("[DB] PGlite deleteTemplate error:", err);
+  }
+
+  memoryTemplates = memoryTemplates.filter((t) => t.id !== id);
+  return true;
+}
+
+export async function setDefaultTemplate(
+  id: string,
+  kind: "certificate" | "student_card"
+): Promise<boolean> {
+  // Set all templates of this kind to is_active = false, then set target id to is_active = true
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      await supabase
+        .from("templates")
+        .update({ is_active: false })
+        .eq("template_kind", kind);
+      await supabase
+        .from("templates")
+        .update({ is_active: true })
+        .eq("id", id);
+    } catch (err) {
+      console.warn("[DB] Supabase setDefaultTemplate error:", err);
+    }
+  }
+
+  try {
+    await db.query(`UPDATE templates SET is_active = false WHERE template_kind = $1;`, [kind]);
+    await db.query(`UPDATE templates SET is_active = true WHERE id = $1;`, [id]);
+  } catch (err) {
+    console.warn("[DB] PGlite setDefaultTemplate error:", err);
+  }
+
+  memoryTemplates.forEach((t) => {
+    if (t.template_kind === kind) {
+      t.is_active = t.id === id;
+    }
+  });
+
+  return true;
 }
 
 // ============================================================================
@@ -496,6 +706,8 @@ export async function createCredential(input: {
   generate_certificate?: boolean;
   generate_card?: boolean;
   generate_student_card?: boolean;
+  certificate_template_id?: string | null;
+  card_template_id?: string | null;
 }): Promise<Credential> {
   const credentialNumber = await generateCredentialNumber();
   const verificationToken = generateVerificationToken();
@@ -516,15 +728,19 @@ export async function createCredential(input: {
     updated_at: new Date().toISOString(),
   };
 
+  const certTemplate = input.certificate_template_id
+    ? await getTemplateById(input.certificate_template_id)
+    : await getTemplateByKind("certificate");
+  const cardTemplate = input.card_template_id
+    ? await getTemplateById(input.card_template_id)
+    : await getTemplateByKind("student_card");
+
   const supabase = getSupabase();
   if (supabase) {
     try {
       await supabase.from("credentials").insert(newCred);
 
       // Create initial credential document placeholders
-      const certTemplate = await getTemplateByKind("certificate");
-      const cardTemplate = await getTemplateByKind("student_card");
-
       if (certTemplate && input.generate_certificate !== false) {
         await supabase.from("credential_documents").insert({
           id: crypto.randomUUID(),
@@ -534,7 +750,7 @@ export async function createCredential(input: {
         });
       }
 
-      if (cardTemplate && input.generate_card !== false) {
+      if (cardTemplate && (input.generate_card !== false && input.generate_student_card !== false)) {
         await supabase.from("credential_documents").insert({
           id: crypto.randomUUID(),
           credential_id: credentialId,
@@ -556,6 +772,30 @@ export async function createCredential(input: {
   newCred.student = student;
   newCred.program = program;
   newCred.documents = [];
+
+  if (certTemplate && input.generate_certificate !== false) {
+    newCred.documents.push({
+      id: crypto.randomUUID(),
+      credential_id: credentialId,
+      document_type: "certificate",
+      template_id: certTemplate.id,
+      template: certTemplate,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  }
+
+  if (cardTemplate && (input.generate_card !== false && input.generate_student_card !== false)) {
+    newCred.documents.push({
+      id: crypto.randomUUID(),
+      credential_id: credentialId,
+      document_type: "student_card",
+      template_id: cardTemplate.id,
+      template: cardTemplate,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  }
 
   memoryCredentials.unshift(newCred);
   return newCred as Credential;
