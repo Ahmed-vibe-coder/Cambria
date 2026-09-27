@@ -208,41 +208,55 @@ export const VerificationDisplay: React.FC<VerificationDisplayProps> = ({ data }
                 return (
                   <div
                     key={idx}
-                    className="p-4 border border-slate-200 rounded-[6px] bg-slate-50/50 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
+                    className="border border-slate-200 rounded-[8px] bg-slate-50/50 overflow-hidden flex flex-col justify-between hover:border-cambria-navy/40 transition-colors shadow-xs"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-[4px] bg-white border border-slate-200 flex items-center justify-center text-cambria-navy shrink-0">
-                        {isCard ? (
-                          <CreditCard className="w-5 h-5 text-cambria-academic" />
-                        ) : (
-                          <FileText className="w-5 h-5 text-cambria-navy" />
-                        )}
+                    {/* Visual Document Banner / Thumbnail */}
+                    {doc.thumbnail_path && (
+                      <div className="h-44 bg-slate-100 border-b border-slate-200 flex items-center justify-center p-2 overflow-hidden relative group">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={doc.thumbnail_path}
+                          alt={isCard ? "Student ID Card" : "Certificate Preview"}
+                          className="max-h-full max-w-full object-contain rounded shadow-xs"
+                        />
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-sm text-cambria-navy">
-                          {isCard ? "Official Student Card" : "Official Certificate & Diploma"}
-                        </h4>
-                        <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
-                          PDF • Verifiable Cryptographic Copy
-                        </span>
-                      </div>
-                    </div>
+                    )}
 
-                    <a
-                      href={doc.file_path}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0"
-                    >
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1.5 h-9 sm:h-8 px-3.5 border-slate-300 hover:border-cambria-navy"
+                    <div className="p-4 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-[6px] bg-white border border-slate-200 flex items-center justify-center text-cambria-navy shrink-0 shadow-xs">
+                          {isCard ? (
+                            <CreditCard className="w-5 h-5 text-cambria-academic" />
+                          ) : (
+                            <FileText className="w-5 h-5 text-cambria-navy" />
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-sm text-cambria-navy">
+                            {isCard ? "Official Student ID Card" : "Official Certificate & Diploma"}
+                          </h4>
+                          <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
+                            PDF • Verifiable Cryptographic Copy
+                          </span>
+                        </div>
+                      </div>
+
+                      <a
+                        href={doc.file_path}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0"
                       >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>Download</span>
-                      </Button>
-                    </a>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5 h-9 sm:h-8 px-3.5 border-slate-300 hover:border-cambria-navy bg-white hover:bg-slate-50 text-xs font-semibold text-cambria-navy"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Download</span>
+                        </Button>
+                      </a>
+                    </div>
                   </div>
                 );
               })}

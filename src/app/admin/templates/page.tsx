@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { getTemplates, setDefaultTemplate, deleteTemplate } from "@/lib/db";
+import { getTemplates, setDefaultTemplate, deleteTemplate, getTemplateById, createTemplate } from "@/lib/db";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,7 @@ import {
   CreditCard,
   Edit,
   Trash2,
+  Copy,
   CheckCircle,
   ExternalLink,
   Sparkles,
@@ -33,6 +34,25 @@ export default async function AdminTemplatesPage() {
     "use server";
     const id = formData.get("id") as string;
     await deleteTemplate(id);
+    revalidatePath("/admin/templates");
+  };
+
+  const handleDuplicate = async (formData: FormData) => {
+    "use server";
+    const id = formData.get("id") as string;
+    const original = await getTemplateById(id);
+    if (!original) return;
+    const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    await createTemplate({
+      name: `${original.name} (Copy)`,
+      code: `${original.code || "TPL"}_COPY_${suffix}`,
+      template_kind: original.template_kind,
+      width: original.width,
+      height: original.height,
+      background_image_url: original.background_image_url,
+      layout_schema: original.layout_schema,
+      is_active: false,
+    });
     revalidatePath("/admin/templates");
   };
 
@@ -170,6 +190,19 @@ export default async function AdminTemplatesPage() {
                     </Button>
                   </Link>
 
+                  <form action={handleDuplicate}>
+                    <input type="hidden" name="id" value={tpl.id} />
+                    <Button
+                      type="submit"
+                      variant="ghost"
+                      size="sm"
+                      className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 h-8 w-8 p-0"
+                      title="Duplicate Template"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </Button>
+                  </form>
+
                   {!tpl.is_active && (
                     <form action={handleSetDefault}>
                       <input type="hidden" name="id" value={tpl.id} />
@@ -304,6 +337,19 @@ export default async function AdminTemplatesPage() {
                       Edit in Builder
                     </Button>
                   </Link>
+
+                  <form action={handleDuplicate}>
+                    <input type="hidden" name="id" value={tpl.id} />
+                    <Button
+                      type="submit"
+                      variant="ghost"
+                      size="sm"
+                      className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 h-8 w-8 p-0"
+                      title="Duplicate Template"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </Button>
+                  </form>
 
                   {!tpl.is_active && (
                     <form action={handleSetDefault}>

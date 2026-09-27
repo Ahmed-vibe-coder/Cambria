@@ -7,7 +7,7 @@ import { Template, TemplateField, TemplateKind } from "@/types/database";
 import { TemplateCanvas } from "./template-canvas";
 import { FieldPropertiesPanel } from "./field-properties";
 import { TemplateSettingsModal } from "./template-settings-modal";
-import { AVAILABLE_FIELD_PRESETS, FieldPreset } from "./template-presets";
+import { AVAILABLE_FIELD_PRESETS, FieldPreset, SAMPLE_STUDENT_PREVIEW_DATA } from "./template-presets";
 import { saveTemplateAction } from "@/actions/templates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ import {
   ChevronDown,
   Sliders,
   Layers,
+  Download,
 } from "lucide-react";
 
 interface TemplateBuilderProps {
@@ -129,6 +130,91 @@ export function TemplateBuilder({
       return [...prev, dupField];
     });
   }, [width, height]);
+
+  // Export Mockup High-Resolution PNG
+  const [isExporting, setIsExporting] = useState(false);
+  const handleExportMockup = async () => {
+    setIsExporting(true);
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      // Draw background
+      ctx.fillStyle = backgroundColor || (templateKind === "certificate" ? "#FFFFFF" : "#020B5A");
+      ctx.fillRect(0, 0, width, height);
+
+      // Draw background image if available
+      if (backgroundImageUrl) {
+        await new Promise<void>((resolve) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve();
+          };
+          img.onerror = () => resolve();
+          img.src = backgroundImageUrl;
+        });
+      }
+
+      // Draw placed fields
+      for (const field of fields) {
+        let text = field.label || field.staticText || field.contentKey || "";
+        if (field.contentKey && (SAMPLE_STUDENT_PREVIEW_DATA as any)[field.contentKey]) {
+          text = (SAMPLE_STUDENT_PREVIEW_DATA as any)[field.contentKey];
+        } else if (field.staticText) {
+          text = field.staticText;
+        }
+        if (field.staticPrefix) text = `${field.staticPrefix}${text}`;
+
+        if (field.type === "qr") {
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(field.x, field.y, field.w, field.h);
+          ctx.strokeStyle = "#020B5A";
+          ctx.lineWidth = 3;
+          ctx.strokeRect(field.x, field.y, field.w, field.h);
+          ctx.fillStyle = "#020B5A";
+          ctx.font = "bold 14px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("QR VERIFY", field.x + field.w / 2, field.y + field.h / 2 + 5);
+        } else if (field.type === "image") {
+          ctx.strokeStyle = "#C8A84E";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(field.x, field.y, field.w, field.h);
+        } else {
+          ctx.fillStyle = field.color || (templateKind === "certificate" ? "#020B5A" : "#FFFFFF");
+          const fontSize = field.size || 18;
+          const fontWeight = field.weight || 400;
+          const fontStyle = field.fontStyle === "italic" ? "italic" : "normal";
+          const fontFamily = field.font || "Inter";
+          ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${fontFamily}", Inter, sans-serif`;
+
+          const align = field.align || (field.direction === "rtl" ? "right" : "left");
+          ctx.textAlign = align as CanvasTextAlign;
+
+          let textX = field.x;
+          if (align === "center") textX = field.x + field.w / 2;
+          else if (align === "right") textX = field.x + field.w;
+
+          const textY = field.y + field.h / 2 + fontSize / 3;
+          ctx.fillText(text, textX, textY);
+        }
+      }
+
+      // Trigger instant PNG download
+      const link = document.createElement("a");
+      link.download = `${name.replace(/[^a-zA-Z0-9_\u0600-\u06FF]/g, "_") || "template"}_mockup.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch (err) {
+      console.error("Export mockup failed:", err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   // Save Template Action
   const handleSave = async () => {
@@ -332,6 +418,19 @@ export function TemplateBuilder({
               <span>{statusMessage.text}</span>
             </div>
           )}
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleExportMockup}
+            disabled={isExporting}
+            className="h-8 border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs gap-1.5"
+            title="Download full-resolution preview mockup PNG"
+          >
+            <Download className="w-3.5 h-3.5 text-[#C8A84E]" />
+            <span className="hidden sm:inline">{isExporting ? "Exporting..." : "Export PNG"}</span>
+          </Button>
 
           <Button
             type="button"

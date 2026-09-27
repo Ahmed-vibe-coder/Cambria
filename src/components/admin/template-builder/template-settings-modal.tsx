@@ -287,6 +287,109 @@ export function TemplateSettingsModal({
             {uploadError && (
               <div className="text-xs text-rose-400">{uploadError}</div>
             )}
+
+            {/* Official Cambria High-Res Blank Master Templates */}
+            <div className="pt-3 border-t border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#C8A84E]" />
+                  Official Institutional Master Blanks (قوالب الجامعة الرسمية الجاهزة)
+                </span>
+                <span className="text-[10px] text-slate-400">1-Click Apply</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  {
+                    id: "cert_landscape_geometric_master",
+                    name: "Modern Geometric (Landscape)",
+                    nameAr: "الشهادة الهندسية الحديثة (أفقي)",
+                    kind: "certificate" as const,
+                    url: "https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515734/cambria/templates/cert_landscape_geometric_master.png",
+                    width: 2000,
+                    height: 1414,
+                  },
+                  {
+                    id: "cert_portrait_elegant_gold_master",
+                    name: "Elegant Gold & Blue (Portrait)",
+                    nameAr: "الشهادة الذهبية الملكية (رأسي)",
+                    kind: "certificate" as const,
+                    url: "https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515735/cambria/templates/cert_portrait_elegant_gold_master.png",
+                    width: 1414,
+                    height: 2000,
+                  },
+                  {
+                    id: "cert_portrait_blue_ribbon_master",
+                    name: "Classic Navy Ribbon (Portrait)",
+                    nameAr: "شهادة وشاح البحرية (رأسي)",
+                    kind: "certificate" as const,
+                    url: "https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515737/cambria/templates/cert_portrait_blue_ribbon_master.png",
+                    width: 1414,
+                    height: 2000,
+                  },
+                  {
+                    id: "cert_portrait_appreciation_master",
+                    name: "Academic Appreciation (Portrait)",
+                    nameAr: "شهادة التقدير الأكاديمية (رأسي)",
+                    kind: "certificate" as const,
+                    url: "https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515744/cambria/templates/cert_portrait_appreciation_master.png",
+                    width: 1414,
+                    height: 2000,
+                  },
+                  {
+                    id: "id_card_cr80_master",
+                    name: "Student ID Card (CR80)",
+                    nameAr: "بطاقة الطالب الجامعية (CR80)",
+                    kind: "student_card" as const,
+                    url: "https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515732/cambria/templates/id_card_cr80_master.png",
+                    width: 1013,
+                    height: 638,
+                  },
+                ].map((master) => {
+                  const isSelected = backgroundImageUrl === master.url;
+                  return (
+                    <button
+                      key={master.id}
+                      type="button"
+                      onClick={() =>
+                        onUpdateSettings({
+                          backgroundImageUrl: master.url,
+                          width: master.width,
+                          height: master.height,
+                          templateKind: master.kind,
+                        })
+                      }
+                      className={`p-2 rounded border text-left flex items-center gap-2.5 transition-all group ${
+                        isSelected
+                          ? "border-[#C8A84E] bg-[#C8A84E]/15 ring-1 ring-[#C8A84E]"
+                          : "border-slate-800 bg-slate-950/60 hover:bg-slate-800/80 hover:border-slate-700"
+                      }`}
+                    >
+                      <div className="w-12 h-9 rounded overflow-hidden shrink-0 border border-slate-700 bg-white">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={master.url}
+                          alt={master.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-semibold text-white group-hover:text-[#C8A84E] truncate">
+                          {master.name}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono truncate">
+                          {master.width}×{master.height}px
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <div className="w-4 h-4 rounded-full bg-[#C8A84E] text-slate-950 flex items-center justify-center shrink-0">
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* 5. Default Template Setting */}

@@ -404,7 +404,7 @@ export async function getTemplateByKind(
 }
 
 export async function createTemplate(
-  input: Omit<Template, "created_at" | "updated_at">
+  input: Omit<Template, "id" | "created_at" | "updated_at"> & { id?: string }
 ): Promise<Template> {
   const now = new Date().toISOString();
   const template: Template = {
