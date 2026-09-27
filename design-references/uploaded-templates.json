@@ -1,0 +1,52 @@
+[
+  {
+    "id": "id_card_cr80_master",
+    "file": "D:\\Dev\\aaa\\design-references\\id-card\\id-card-cr80-master-blank.png",
+    "kind": "student_card",
+    "name": "Official Student Identification Card (CR80 Executive)",
+    "public_id": "cambria/templates/id_card_cr80_master",
+    "secure_url": "https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515732/cambria/templates/id_card_cr80_master.png",
+    "width": 1013,
+    "height": 638
+  },
+  {
+    "id": "cert_landscape_geometric_master",
+    "file": "D:\\Dev\\aaa\\design-references\\certificates\\cert-landscape-geometric-master-blank.png",
+    "kind": "certificate",
+    "name": "Modern Geometric Certificate of Completion (Landscape)",
+    "public_id": "cambria/templates/cert_landscape_geometric_master",
+    "secure_url": "https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515734/cambria/templates/cert_landscape_geometric_master.png",
+    "width": 2000,
+    "height": 1414
+  },
+  {
+    "id": "cert_portrait_elegant_gold_master",
+    "file": "D:\\Dev\\aaa\\design-references\\certificates\\cert-portrait-elegant-gold-master-blank.png",
+    "kind": "certificate",
+    "name": "Elegant Gold & Blue Seminar Certificate (Portrait)",
+    "public_id": "cambria/templates/cert_portrait_elegant_gold_master",
+    "secure_url": "https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515735/cambria/templates/cert_portrait_elegant_gold_master.png",
+    "width": 1414,
+    "height": 2000
+  },
+  {
+    "id": "cert_portrait_blue_ribbon_master",
+    "file": "D:\\Dev\\aaa\\design-references\\certificates\\cert-portrait-blue-ribbon-master-blank.png",
+    "kind": "certificate",
+    "name": "Classic Navy Ribbon Distinction Certificate (Portrait)",
+    "public_id": "cambria/templates/cert_portrait_blue_ribbon_master",
+    "secure_url": "https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515737/cambria/templates/cert_portrait_blue_ribbon_master.png",
+    "width": 1414,
+    "height": 2000
+  },
+  {
+    "id": "cert_portrait_appreciation_master",
+    "file": "D:\\Dev\\aaa\\design-references\\certificates\\cert-portrait-appreciation-master-blank.png",
+    "kind": "certificate",
+    "name": "Prestigious Academic Appreciation Certificate (Portrait)",
+    "public_id": "cambria/templates/cert_portrait_appreciation_master",
+    "secure_url": "https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515744/cambria/templates/cert_portrait_appreciation_master.png",
+    "width": 1414,
+    "height": 2000
+  }
+]

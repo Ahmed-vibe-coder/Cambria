@@ -27,15 +27,127 @@ VALUES ('a0000000-0000-0000-0000-000000000004', 'AIMS-601', 'Applied Artificial 
 ON CONFLICT (id) DO NOTHING;
 
 -- ----------------------------------------------------------------------------
--- Table: templates (2 rows)
+-- Table: templates (5 rows)
 -- ----------------------------------------------------------------------------
 INSERT INTO public.templates (id, code, name, template_kind, width, height, background_image_url, layout_schema, is_active, created_at, updated_at)
-VALUES ('c0000000-0000-0000-0000-000000000001', 'CERT_STANDARD_V1', 'Official Cambria Institutional Diploma & Certificate', 'certificate', 1600, 1131, NULL, '{"width":1600,"fields":[{"h":40,"w":1200,"x":200,"y":140,"id":"college_name","font":"Inter","size":18,"type":"text","align":"center","color":"#020B5A","weight":700,"staticText":"CAMBRIA INTERNATIONAL COLLEGE"},{"h":60,"w":1200,"x":200,"y":260,"id":"certificate_title","font":"Cormorant Garamond","size":46,"type":"text","align":"center","color":"#020B5A","weight":600,"staticText":"Certificate of Completion & Professional Award"},{"h":30,"w":1000,"x":300,"y":350,"id":"conferred_notice","font":"Inter","size":15,"type":"text","align":"center","color":"#64748B","staticText":"This official credential is duly conferred upon"},{"h":65,"w":1200,"x":200,"y":410,"id":"student_name_en","font":"Cormorant Garamond","size":44,"type":"text","align":"center","color":"#020B5A","weight":700,"contentKey":"student_name_en"},{"h":50,"w":1200,"x":200,"y":480,"id":"student_name_ar","font":"Cairo","size":28,"type":"text","align":"center","color":"#243A8F","weight":700,"direction":"rtl","contentKey":"student_name_ar"},{"h":30,"w":1000,"x":300,"y":560,"id":"requirement_notice","font":"Inter","size":15,"type":"text","align":"center","color":"#64748B","staticText":"having successfully fulfilled all academic requirements for the curriculum of"},{"h":55,"w":1200,"x":200,"y":610,"id":"program_name_en","font":"Cormorant Garamond","size":36,"type":"text","align":"center","color":"#07133F","weight":600,"contentKey":"program_name_en"},{"h":25,"w":400,"x":60,"y":1050,"id":"credential_number","font":"Inter","size":12,"type":"text","align":"left","color":"#020B5A","weight":600,"contentKey":"credential_number"},{"h":25,"w":400,"x":60,"y":1075,"id":"issue_date","font":"Inter","size":11,"type":"text","align":"left","color":"#64748B","contentKey":"issue_date"},{"h":130,"w":130,"x":1380,"y":920,"id":"qr_code","type":"qr","contentKey":"verification_url"}],"height":1131,"template_kind":"certificate","background_color":"#FFFFFF"}'::jsonb, true, '2026-09-26T08:48:27.554Z', '2026-09-26T08:48:27.554Z')
-ON CONFLICT (id) DO NOTHING;
+VALUES (
+  'c0000000-0000-0000-0000-000000000001',
+  'CERT_LANDSCAPE_GEOMETRIC',
+  'Modern Geometric Certificate of Completion (Landscape)',
+  'certificate',
+  2000,
+  1414,
+  'https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515734/cambria/templates/cert_landscape_geometric_master.png',
+  '{"width":2000,"height":1414,"template_kind":"certificate","background_color":"#FFFFFF","background_image_url":"https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515734/cambria/templates/cert_landscape_geometric_master.png","fields":[{"id":"student_name_en","type":"text","x":200,"y":580,"w":1600,"h":110,"font":"Cormorant Garamond","size":68,"weight":700,"color":"#000000","align":"center","contentKey":"student_name_en"},{"id":"statement","type":"text","x":250,"y":730,"w":1500,"h":55,"font":"Montserrat","size":22,"weight":500,"color":"#0F172A","align":"center","staticText":"Has successfully completed the college training program, passed the final examinations, and has been awarded the degree of"},{"id":"program_name_en","type":"text","x":200,"y":810,"w":1600,"h":85,"font":"Cormorant Garamond","size":52,"weight":700,"color":"#020B5A","align":"center","contentKey":"program_name_en"},{"id":"credential_number","type":"text","x":420,"y":920,"w":700,"h":35,"font":"Montserrat","size":22,"weight":700,"color":"#0F172A","align":"left","contentKey":"credential_number","staticPrefix":"Certificate Number: "},{"id":"grade","type":"text","x":420,"y":960,"w":700,"h":35,"font":"Montserrat","size":22,"weight":600,"color":"#0F172A","align":"left","contentKey":"grade","staticPrefix":"Grade: "},{"id":"issue_date","type":"text","x":420,"y":1000,"w":700,"h":35,"font":"Montserrat","size":22,"weight":600,"color":"#0F172A","align":"left","contentKey":"issue_date","staticPrefix":"CER.Date: "},{"id":"verification_notice","type":"text","x":420,"y":1040,"w":900,"h":35,"font":"Montserrat","size":20,"weight":600,"color":"#0F172A","align":"left","contentKey":"verification_notice","staticPrefix":"To confirm certificate visit: "},{"id":"qr_code","type":"qr","x":1380,"y":1180,"w":130,"h":130,"borderRadius":4,"contentKey":"verification_url"}]}'::jsonb,
+  true,
+  '2026-09-26T08:48:27.554Z',
+  '2026-09-26T08:48:27.554Z'
+)
+ON CONFLICT (id) DO UPDATE SET
+  code = EXCLUDED.code,
+  name = EXCLUDED.name,
+  template_kind = EXCLUDED.template_kind,
+  width = EXCLUDED.width,
+  height = EXCLUDED.height,
+  background_image_url = EXCLUDED.background_image_url,
+  layout_schema = EXCLUDED.layout_schema,
+  is_active = EXCLUDED.is_active;
 
 INSERT INTO public.templates (id, code, name, template_kind, width, height, background_image_url, layout_schema, is_active, created_at, updated_at)
-VALUES ('c0000000-0000-0000-0000-000000000002', 'CARD_STANDARD_V1', 'Official Cambria Student Identification Card', 'student_card', 600, 900, NULL, '{"width":600,"fields":[{"h":30,"w":540,"x":30,"y":50,"id":"card_header_institution","font":"Inter","size":14,"type":"text","align":"center","color":"#FFFFFF","weight":700,"staticText":"CAMBRIA INTERNATIONAL COLLEGE"},{"h":24,"w":540,"x":30,"y":80,"id":"card_badge_title","font":"Inter","size":11,"type":"text","align":"center","color":"#C8A84E","weight":600,"staticText":"OFFICIAL STUDENT IDENTIFICATION"},{"h":35,"w":520,"x":40,"y":340,"id":"student_name_en","font":"Cormorant Garamond","size":26,"type":"text","align":"center","color":"#FFFFFF","weight":600,"contentKey":"student_name_en"},{"h":30,"w":520,"x":40,"y":380,"id":"student_name_ar","font":"Cairo","size":18,"type":"text","align":"center","color":"#E2CCA0","weight":600,"direction":"rtl","contentKey":"student_name_ar"},{"h":40,"w":520,"x":40,"y":440,"id":"program_name_en","font":"Inter","size":13,"type":"text","align":"center","color":"#EAF0FF","contentKey":"program_name_en"},{"h":25,"w":520,"x":40,"y":520,"id":"credential_number","font":"Inter","size":12,"type":"text","align":"center","color":"#C8A84E","weight":600,"contentKey":"credential_number"},{"h":140,"w":140,"x":230,"y":590,"id":"qr_code","type":"qr","contentKey":"verification_url"}],"height":900,"template_kind":"student_card","background_color":"#07133F"}'::jsonb, true, '2026-09-26T08:48:27.606Z', '2026-09-26T08:48:27.606Z')
-ON CONFLICT (id) DO NOTHING;
+VALUES (
+  'c0000000-0000-0000-0000-000000000002',
+  'CARD_CR80_EXECUTIVE',
+  'Official Student Identification Card (CR80 Executive)',
+  'student_card',
+  1013,
+  638,
+  'https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515732/cambria/templates/id_card_cr80_master.png',
+  '{"width":1013,"height":638,"template_kind":"student_card","background_color":"#FFFFFF","background_image_url":"https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515732/cambria/templates/id_card_cr80_master.png","fields":[{"id":"student_photo","type":"image","x":17,"y":190,"w":294,"h":392,"borderRadius":24,"contentKey":"student_photo"},{"id":"student_name","type":"text","x":505,"y":292,"w":350,"h":35,"font":"Montserrat","size":24,"weight":700,"color":"#07133F","align":"left","contentKey":"student_name_en","staticPrefix":": "},{"id":"student_national_id","type":"text","x":505,"y":338,"w":350,"h":35,"font":"Montserrat","size":22,"weight":600,"color":"#07133F","align":"left","contentKey":"student_national_id","staticPrefix":": "},{"id":"student_country","type":"text","x":505,"y":384,"w":350,"h":35,"font":"Montserrat","size":22,"weight":600,"color":"#07133F","align":"left","contentKey":"student_country","staticPrefix":": "},{"id":"degree_level","type":"text","x":505,"y":430,"w":350,"h":35,"font":"Montserrat","size":22,"weight":600,"color":"#07133F","align":"left","contentKey":"degree_level","staticPrefix":": "},{"id":"specialization","type":"text","x":505,"y":476,"w":350,"h":35,"font":"Montserrat","size":20,"weight":600,"color":"#07133F","align":"left","contentKey":"specialization","staticPrefix":": "},{"id":"expiry_date","type":"text","x":485,"y":596,"w":160,"h":28,"font":"Montserrat","size":22,"weight":700,"color":"#07133F","align":"left","contentKey":"expiry_date"},{"id":"qr_code","type":"qr","x":665,"y":514,"w":66,"h":66,"borderRadius":4,"contentKey":"verification_url"},{"id":"credential_number","type":"text","x":760,"y":550,"w":235,"h":30,"font":"Montserrat","size":20,"weight":700,"color":"#07133F","align":"center","contentKey":"credential_number"}]}'::jsonb,
+  true,
+  '2026-09-26T08:48:27.606Z',
+  '2026-09-26T08:48:27.606Z'
+)
+ON CONFLICT (id) DO UPDATE SET
+  code = EXCLUDED.code,
+  name = EXCLUDED.name,
+  template_kind = EXCLUDED.template_kind,
+  width = EXCLUDED.width,
+  height = EXCLUDED.height,
+  background_image_url = EXCLUDED.background_image_url,
+  layout_schema = EXCLUDED.layout_schema,
+  is_active = EXCLUDED.is_active;
+
+INSERT INTO public.templates (id, code, name, template_kind, width, height, background_image_url, layout_schema, is_active, created_at, updated_at)
+VALUES (
+  'c0000000-0000-0000-0000-000000000003',
+  'CERT_PORTRAIT_ELEGANT_GOLD',
+  'Elegant Gold & Blue Seminar Certificate (Portrait)',
+  'certificate',
+  1414,
+  2000,
+  'https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515735/cambria/templates/cert_portrait_elegant_gold_master.png',
+  '{"width":1414,"height":2000,"template_kind":"certificate","background_color":"#FFFFFF","background_image_url":"https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515735/cambria/templates/cert_portrait_elegant_gold_master.png","fields":[{"id":"student_name_en","type":"text","x":100,"y":650,"w":1214,"h":110,"font":"Alex Brush","size":74,"weight":400,"color":"#020B5A","align":"center","contentKey":"student_name_en"},{"id":"statement","type":"text","x":150,"y":860,"w":1114,"h":80,"font":"Montserrat","size":24,"weight":500,"color":"#0F172A","align":"center","lineHeight":1.4,"staticText":"Has successfully completed the college training program, passed the final examinations, and has been awarded the degree of"},{"id":"degree_level","type":"text","x":150,"y":990,"w":1114,"h":60,"font":"Montserrat","size":44,"weight":800,"color":"#020B5A","align":"center","contentKey":"degree_level"},{"id":"program_name_en","type":"text","x":100,"y":1080,"w":1214,"h":75,"font":"Montserrat","size":36,"weight":700,"color":"#020B5A","align":"center","contentKey":"program_name_en"},{"id":"credential_number","type":"text","x":240,"y":1180,"w":900,"h":40,"font":"Montserrat","size":24,"weight":700,"color":"#0F172A","align":"left","contentKey":"credential_number","staticPrefix":"Certificate Number: "},{"id":"grade","type":"text","x":240,"y":1230,"w":900,"h":40,"font":"Montserrat","size":24,"weight":600,"color":"#0F172A","align":"left","contentKey":"grade","staticPrefix":"Grade: "},{"id":"issue_date","type":"text","x":240,"y":1280,"w":900,"h":40,"font":"Montserrat","size":24,"weight":600,"color":"#0F172A","align":"left","contentKey":"issue_date","staticPrefix":"CER.Date: "},{"id":"verification_notice","type":"text","x":240,"y":1330,"w":900,"h":40,"font":"Montserrat","size":22,"weight":600,"color":"#0F172A","align":"left","contentKey":"verification_notice","staticPrefix":"To confirm certificate visit: "},{"id":"qr_code","type":"qr","x":790,"y":1760,"w":170,"h":170,"borderRadius":4,"contentKey":"verification_url"}]}'::jsonb,
+  true,
+  '2026-09-26T08:48:27.606Z',
+  '2026-09-26T08:48:27.606Z'
+)
+ON CONFLICT (id) DO UPDATE SET
+  code = EXCLUDED.code,
+  name = EXCLUDED.name,
+  template_kind = EXCLUDED.template_kind,
+  width = EXCLUDED.width,
+  height = EXCLUDED.height,
+  background_image_url = EXCLUDED.background_image_url,
+  layout_schema = EXCLUDED.layout_schema,
+  is_active = EXCLUDED.is_active;
+
+INSERT INTO public.templates (id, code, name, template_kind, width, height, background_image_url, layout_schema, is_active, created_at, updated_at)
+VALUES (
+  'c0000000-0000-0000-0000-000000000004',
+  'CERT_PORTRAIT_BLUE_RIBBON',
+  'Classic Navy Ribbon Distinction Certificate (Portrait)',
+  'certificate',
+  1414,
+  2000,
+  'https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515737/cambria/templates/cert_portrait_blue_ribbon_master.png',
+  '{"width":1414,"height":2000,"template_kind":"certificate","background_color":"#FFFFFF","background_image_url":"https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515737/cambria/templates/cert_portrait_blue_ribbon_master.png","fields":[{"id":"student_name_en","type":"text","x":100,"y":742,"w":1214,"h":80,"font":"Cormorant Garamond","size":60,"weight":700,"color":"#FFFFFF","align":"center","contentKey":"student_name_en"},{"id":"statement","type":"text","x":150,"y":890,"w":1114,"h":80,"font":"Montserrat","size":24,"weight":500,"color":"#0F172A","align":"center","lineHeight":1.4,"staticText":"Has successfully completed the college training program, passed the final examinations, and has been awarded the degree of"},{"id":"program_name_en","type":"text","x":100,"y":1000,"w":1214,"h":80,"font":"Cormorant Garamond","size":46,"weight":700,"color":"#020B5A","align":"center","contentKey":"program_name_en"},{"id":"credential_number","type":"text","x":240,"y":1150,"w":900,"h":40,"font":"Montserrat","size":24,"weight":700,"color":"#0F172A","align":"left","contentKey":"credential_number","staticPrefix":"Certificate Number: "},{"id":"grade","type":"text","x":240,"y":1200,"w":900,"h":40,"font":"Montserrat","size":24,"weight":600,"color":"#0F172A","align":"left","contentKey":"grade","staticPrefix":"Grade: "},{"id":"issue_date","type":"text","x":240,"y":1250,"w":900,"h":40,"font":"Montserrat","size":24,"weight":600,"color":"#0F172A","align":"left","contentKey":"issue_date","staticPrefix":"CER.Date: "},{"id":"verification_notice","type":"text","x":240,"y":1300,"w":900,"h":40,"font":"Montserrat","size":22,"weight":600,"color":"#0F172A","align":"left","contentKey":"verification_notice","staticPrefix":"To confirm certificate visit: "},{"id":"qr_code","type":"qr","x":790,"y":1760,"w":170,"h":170,"borderRadius":4,"contentKey":"verification_url"}]}'::jsonb,
+  true,
+  '2026-09-26T08:48:27.606Z',
+  '2026-09-26T08:48:27.606Z'
+)
+ON CONFLICT (id) DO UPDATE SET
+  code = EXCLUDED.code,
+  name = EXCLUDED.name,
+  template_kind = EXCLUDED.template_kind,
+  width = EXCLUDED.width,
+  height = EXCLUDED.height,
+  background_image_url = EXCLUDED.background_image_url,
+  layout_schema = EXCLUDED.layout_schema,
+  is_active = EXCLUDED.is_active;
+
+INSERT INTO public.templates (id, code, name, template_kind, width, height, background_image_url, layout_schema, is_active, created_at, updated_at)
+VALUES (
+  'c0000000-0000-0000-0000-000000000005',
+  'CERT_PORTRAIT_APPRECIATION',
+  'Prestigious Academic Appreciation Certificate (Portrait)',
+  'certificate',
+  1414,
+  2000,
+  'https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515744/cambria/templates/cert_portrait_appreciation_master.png',
+  '{"width":1414,"height":2000,"template_kind":"certificate","background_color":"#FFFFFF","background_image_url":"https://res.cloudinary.com/kwe1gmrq/image/upload/v1790515744/cambria/templates/cert_portrait_appreciation_master.png","fields":[{"id":"student_name_en","type":"text","x":100,"y":820,"w":1214,"h":110,"font":"Alex Brush","size":74,"weight":400,"color":"#020B5A","align":"center","contentKey":"student_name_en"},{"id":"statement","type":"text","x":150,"y":1040,"w":1114,"h":80,"font":"Montserrat","size":24,"weight":500,"color":"#0F172A","align":"center","lineHeight":1.4,"staticText":"Has successfully completed the college training program, passed the final examinations, and has been awarded the degree of"},{"id":"program_name_en","type":"text","x":100,"y":1150,"w":1214,"h":80,"font":"Cormorant Garamond","size":48,"weight":700,"color":"#020B5A","align":"center","contentKey":"program_name_en"},{"id":"credential_number","type":"text","x":240,"y":1270,"w":900,"h":40,"font":"Montserrat","size":24,"weight":700,"color":"#0F172A","align":"left","contentKey":"credential_number","staticPrefix":"Certificate Number: "},{"id":"grade","type":"text","x":240,"y":1320,"w":900,"h":40,"font":"Montserrat","size":24,"weight":600,"color":"#0F172A","align":"left","contentKey":"grade","staticPrefix":"Grade: "},{"id":"issue_date","type":"text","x":240,"y":1370,"w":900,"h":40,"font":"Montserrat","size":24,"weight":600,"color":"#0F172A","align":"left","contentKey":"issue_date","staticPrefix":"CER.Date: "},{"id":"verification_notice","type":"text","x":240,"y":1420,"w":900,"h":40,"font":"Montserrat","size":22,"weight":600,"color":"#0F172A","align":"left","contentKey":"verification_notice","staticPrefix":"To confirm certificate visit: "},{"id":"qr_code","type":"qr","x":790,"y":1760,"w":170,"h":170,"borderRadius":4,"contentKey":"verification_url"}]}'::jsonb,
+  true,
+  '2026-09-26T08:48:27.606Z',
+  '2026-09-26T08:48:27.606Z'
+)
+ON CONFLICT (id) DO UPDATE SET
+  code = EXCLUDED.code,
+  name = EXCLUDED.name,
+  template_kind = EXCLUDED.template_kind,
+  width = EXCLUDED.width,
+  height = EXCLUDED.height,
+  background_image_url = EXCLUDED.background_image_url,
+  layout_schema = EXCLUDED.layout_schema,
+  is_active = EXCLUDED.is_active;
 
 -- ----------------------------------------------------------------------------
 -- Table: students (5 rows)

@@ -23,6 +23,17 @@ interface RenderPayload {
   data: DocumentRenderData;
 }
 
+export function maskNationalId(id: string): string {
+  if (!id) return "";
+  const cleaned = id.trim();
+  if (cleaned.length <= 5) return cleaned;
+  if (cleaned.includes("*")) return cleaned;
+  const start = cleaned.slice(0, 3);
+  const end = cleaned.slice(-2);
+  const maskLen = Math.max(3, cleaned.length - 5);
+  return `${start}${"*".repeat(maskLen)}${end}`;
+}
+
 export function generateDocumentHtml(payload: RenderPayload): string {
   const { layout, data } = payload;
   const isCertificate = layout.template_kind === "certificate";
@@ -36,7 +47,7 @@ export function generateDocumentHtml(payload: RenderPayload): string {
   <title>${isCertificate ? "Official Certificate" : "Official Student Card"} - ${data.credential_number}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cairo:wght@400;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Inter:wght@400;500;600;700;800&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -77,9 +88,18 @@ export function generateDocumentHtml(payload: RenderPayload): string {
     .font-sans {
       font-family: 'Inter', system-ui, sans-serif;
     }
+    .font-montserrat {
+      font-family: 'Montserrat', system-ui, sans-serif;
+    }
     .font-arabic {
       font-family: 'Cairo', system-ui, sans-serif;
       direction: rtl;
+    }
+    .font-script {
+      font-family: 'Alex Brush', cursive;
+    }
+    .font-great-vibes {
+      font-family: 'Great Vibes', cursive;
     }
     .font-mono {
       font-family: 'Courier New', Courier, monospace;
@@ -217,18 +237,86 @@ export function generateDocumentHtml(payload: RenderPayload): string {
     .map((field) => {
       let content = field.staticText || "";
       if (field.contentKey) {
-        if (field.contentKey === "student_name_en") content = data.student_name_en || "";
-        else if (field.contentKey === "student_name_ar") content = data.student_name_ar || "";
-        else if (field.contentKey === "program_name_en") content = data.program_name_en || "";
-        else if (field.contentKey === "program_name_ar") content = data.program_name_ar || data.program_name_en || "";
-        else if (field.contentKey === "credential_number") content = data.credential_number || "";
-        else if (field.contentKey === "student_id_number") content = data.student_id_number || "";
-        else if (field.contentKey === "issue_date") content = data.issue_date || "";
-        else if (field.contentKey === "expiry_date") content = data.expiry_date || "N/A";
-        else if (field.contentKey === "degree_level") content = data.degree_level || "";
-        else if (field.contentKey === "college_name_en") content = data.college_name_en || "CAMBRIA INTERNATIONAL COLLEGE";
-        else if (field.contentKey === "college_name_ar") content = data.college_name_ar || "كلية كامبريا الدولية";
-        else if (data[field.contentKey]) content = String(data[field.contentKey]);
+        switch (field.contentKey) {
+          case "student_name_en":
+            content = data.student_name_en || "";
+            break;
+          case "student_name_ar":
+            content = data.student_name_ar || "";
+            break;
+          case "student_name":
+            content = data.student_name_en || data.student_name_ar || "";
+            break;
+          case "program_name_en":
+          case "program_name":
+            content = data.program_name_en || "";
+            break;
+          case "program_name_ar":
+            content = data.program_name_ar || data.program_name_en || "";
+            break;
+          case "credential_number":
+          case "certificate_number":
+            content = data.credential_number || "";
+            break;
+          case "student_id_number":
+            content = data.student_id_number || "";
+            break;
+          case "student_national_id": {
+            const rawId = data.student_national_id || data.national_id || "";
+            content = rawId ? maskNationalId(String(rawId)) : "";
+            break;
+          }
+          case "student_national_id_raw":
+            content = String(data.student_national_id || data.national_id || "");
+            break;
+          case "student_country":
+          case "country":
+          case "nationality":
+            content = data.student_country || data.country || data.nationality || "";
+            break;
+          case "student_specialization":
+          case "program_specialization":
+          case "specialization":
+            content = data.specialization || data.program_specialization || data.student_specialization || "";
+            break;
+          case "degree_level":
+          case "title":
+            content = data.degree_level || data.title || "";
+            break;
+          case "issue_date":
+            content = data.issue_date || "";
+            break;
+          case "expiry_date":
+          case "valid_date":
+            content = data.expiry_date || data.valid_date || "";
+            break;
+          case "grade":
+          case "gpa":
+            content = data.grade || data.gpa || "";
+            break;
+          case "verification_url":
+            content = data.verification_url || "";
+            break;
+          case "verification_notice":
+            content = data.verification_domain_notice || (data.verification_url ? new URL(data.verification_url).host : "www.cambria.edu");
+            break;
+          case "college_name_en":
+            content = data.college_name_en || "CAMBRIA INTERNATIONAL COLLEGE";
+            break;
+          case "college_name_ar":
+            content = data.college_name_ar || "كلية كامبريا الدولية";
+            break;
+          default:
+            if (data[field.contentKey] !== undefined && data[field.contentKey] !== null) {
+              content = String(data[field.contentKey]);
+            }
+            break;
+        }
+      }
+
+      // Prepend staticPrefix if specified and content is non-empty
+      if (field.staticPrefix && content) {
+        content = `${field.staticPrefix}${content}`;
       }
 
       // Format QR Code
@@ -299,14 +387,12 @@ export function generateDocumentHtml(payload: RenderPayload): string {
               top: ${field.y}px;
               width: ${field.w}px;
               height: ${field.h}px;
-              border: 2px solid #C8A84E;
               border-radius: ${field.borderRadius ?? 6}px;
               overflow: hidden;
-              background: rgba(255,255,255,0.1);
               opacity: ${field.opacity ?? 1};
             "
           >
-            <img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Student Photo" />
+            <img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: ${field.borderRadius ?? 6}px;" alt="Student Photo" />
           </div>
           `;
         }
@@ -333,16 +419,17 @@ export function generateDocumentHtml(payload: RenderPayload): string {
 
       // Format Text & Badges
       const isRtl = field.direction === "rtl";
-      const fontClass =
-        field.font === "Cormorant Garamond"
-          ? "font-serif"
-          : field.font === "Cairo"
-          ? "font-arabic"
-          : field.font === "Playfair Display"
-          ? "font-playfair"
-          : field.font === "Courier New"
-          ? "font-mono"
-          : "font-sans";
+      let fontClass = "font-sans";
+      let inlineFont = "";
+
+      if (field.font === "Cormorant Garamond") fontClass = "font-serif";
+      else if (field.font === "Cairo") fontClass = "font-arabic";
+      else if (field.font === "Playfair Display") fontClass = "font-playfair";
+      else if (field.font === "Montserrat") fontClass = "font-montserrat";
+      else if (field.font === "Alex Brush") fontClass = "font-script";
+      else if (field.font === "Great Vibes") fontClass = "font-great-vibes";
+      else if (field.font === "Courier New") fontClass = "font-mono";
+      else if (field.font) inlineFont = `font-family: '${field.font}', sans-serif;`;
 
       return `
       <div
@@ -357,6 +444,8 @@ export function generateDocumentHtml(payload: RenderPayload): string {
           color: ${field.color || (isCertificate ? "#020B5A" : "#FFFFFF")};
           text-align: ${field.align || (isRtl ? "right" : "left")};
           ${isRtl ? "direction: rtl;" : ""}
+          ${inlineFont}
+          ${field.fontStyle ? `font-style: ${field.fontStyle};` : ""}
           opacity: ${field.opacity ?? 1};
           border-radius: ${field.borderRadius ?? 0}px;
           ${field.letterSpacing ? `letter-spacing: ${field.letterSpacing};` : ""}

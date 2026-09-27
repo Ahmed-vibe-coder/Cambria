@@ -17,13 +17,15 @@ export const CambriaSeal: React.FC<CambriaSealProps> = ({
   useSvg = false,
   priority = false,
 }) => {
-  // If not explicitly requesting SVG and size is typical for visible UI logos (<= 250px),
-  // render the official high-resolution Cambria College circular emblem
-  if (!useSvg && size <= 250) {
+  // If not explicitly requesting SVG, render the official high-resolution transparent circular emblem
+  if (!useSvg) {
+    const isWhite = variant === "white";
+    const isGold = variant === "gold";
+
     return (
       <div
         className={cn(
-          "relative inline-flex items-center justify-center shrink-0 rounded-full overflow-hidden",
+          "relative inline-flex items-center justify-center shrink-0 rounded-full",
           className
         )}
         style={{ width: size, height: size }}
@@ -34,7 +36,11 @@ export const CambriaSeal: React.FC<CambriaSealProps> = ({
           width={size}
           height={size}
           priority={priority}
-          className="w-full h-full object-contain rounded-full select-none"
+          className={cn(
+            "w-full h-full object-contain rounded-full select-none pointer-events-none",
+            isWhite && "brightness-0 invert",
+            isGold && "brightness-0 sepia hue-rotate-15 saturate-200"
+          )}
         />
       </div>
     );

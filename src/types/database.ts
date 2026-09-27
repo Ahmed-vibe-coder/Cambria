@@ -181,6 +181,8 @@ export interface TemplateField {
   borderRadius?: number;
   letterSpacing?: string;
   lineHeight?: number;
+  fontStyle?: string;
+  staticPrefix?: string;
 }
 
 export interface TemplateLayout {
