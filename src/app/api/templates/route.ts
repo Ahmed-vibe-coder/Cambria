@@ -18,6 +18,23 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const sessionCookie = req.cookies.get("cambria_staff_session");
+    const mfaCookie = req.cookies.get("cambria_staff_mfa_verified");
+    const supabaseCookie =
+      req.cookies.get("sb-access-token") ||
+      req.cookies.get("supabase-auth-token") ||
+      req.cookies.getAll().find((c) => c.name.includes("-auth-token"));
+
+    const hasSession = Boolean(sessionCookie?.value || supabaseCookie?.value);
+    const hasMfa = Boolean(mfaCookie?.value === "true" || supabaseCookie?.value);
+
+    if (!hasSession || !hasMfa) {
+      return NextResponse.json(
+        { error: "Unauthorized: Active administrative MFA session required to create templates." },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const {
       name,

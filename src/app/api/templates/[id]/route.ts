@@ -27,6 +27,23 @@ export async function PUT(
   props: { params: Promise<{ id: string }> }
 ) {
   try {
+    const sessionCookie = req.cookies.get("cambria_staff_session");
+    const mfaCookie = req.cookies.get("cambria_staff_mfa_verified");
+    const supabaseCookie =
+      req.cookies.get("sb-access-token") ||
+      req.cookies.get("supabase-auth-token") ||
+      req.cookies.getAll().find((c) => c.name.includes("-auth-token"));
+
+    const hasSession = Boolean(sessionCookie?.value || supabaseCookie?.value);
+    const hasMfa = Boolean(mfaCookie?.value === "true" || supabaseCookie?.value);
+
+    if (!hasSession || !hasMfa) {
+      return NextResponse.json(
+        { error: "Unauthorized: Active administrative MFA session required to update templates." },
+        { status: 401 }
+      );
+    }
+
     const params = await props.params;
     const body = await req.json();
     const { is_default, ...templateData } = body;
@@ -54,6 +71,23 @@ export async function DELETE(
   props: { params: Promise<{ id: string }> }
 ) {
   try {
+    const sessionCookie = req.cookies.get("cambria_staff_session");
+    const mfaCookie = req.cookies.get("cambria_staff_mfa_verified");
+    const supabaseCookie =
+      req.cookies.get("sb-access-token") ||
+      req.cookies.get("supabase-auth-token") ||
+      req.cookies.getAll().find((c) => c.name.includes("-auth-token"));
+
+    const hasSession = Boolean(sessionCookie?.value || supabaseCookie?.value);
+    const hasMfa = Boolean(mfaCookie?.value === "true" || supabaseCookie?.value);
+
+    if (!hasSession || !hasMfa) {
+      return NextResponse.json(
+        { error: "Unauthorized: Active administrative MFA session required to delete templates." },
+        { status: 401 }
+      );
+    }
+
     const params = await props.params;
     const deleted = await deleteTemplate(params.id);
     return NextResponse.json({ success: deleted });

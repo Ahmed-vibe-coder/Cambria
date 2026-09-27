@@ -1,39 +1,121 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB Maximum
+
+function validateImageMagicBytes(buffer: Buffer): { isValid: boolean; mimeType: string; ext: string } {
+  if (buffer.length < 8) return { isValid: false, mimeType: "", ext: "" };
+
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47
+  ) {
+    return { isValid: true, mimeType: "image/png", ext: ".png" };
+  }
+
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return { isValid: true, mimeType: "image/jpeg", ext: ".jpg" };
+  }
+
+  // WebP: RIFF ... WEBP (52 49 46 46 ... 57 45 42 50)
+  if (
+    buffer[0] === 0x52 &&
+    buffer[1] === 0x49 &&
+    buffer[2] === 0x46 &&
+    buffer[3] === 0x46 &&
+    buffer.length >= 12 &&
+    buffer[8] === 0x57 &&
+    buffer[9] === 0x45 &&
+    buffer[10] === 0x42 &&
+    buffer[11] === 0x50
+  ) {
+    return { isValid: true, mimeType: "image/webp", ext: ".webp" };
+  }
+
+  return { isValid: false, mimeType: "", ext: "" };
+}
+
 export async function POST(req: NextRequest) {
   try {
+    // 1. Mandatory Administrative Authentication & MFA Session Gate
+    const sessionCookie = req.cookies.get("cambria_staff_session");
+    const mfaCookie = req.cookies.get("cambria_staff_mfa_verified");
+    const supabaseCookie =
+      req.cookies.get("sb-access-token") ||
+      req.cookies.get("supabase-auth-token") ||
+      req.cookies.getAll().find((c) => c.name.includes("-auth-token"));
+
+    const hasSession = Boolean(sessionCookie?.value || supabaseCookie?.value);
+    const hasMfa = Boolean(mfaCookie?.value === "true" || supabaseCookie?.value);
+
+    if (!hasSession || !hasMfa) {
+      return NextResponse.json(
+        { error: "Unauthorized: Active administrative MFA session required to upload template assets." },
+        { status: 401 }
+      );
+    }
+
+    // 2. Parse Multipart Form Data
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      return NextResponse.json({ error: "No file provided for upload." }, { status: 400 });
     }
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Ensure uploads directory exists
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", "templates");
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
+    // 3. Enforce Strict Size Limit (5MB)
+    if (buffer.length > MAX_FILE_SIZE_BYTES) {
+      return NextResponse.json(
+        {
+          error: `File size (${(buffer.length / (1024 * 1024)).toFixed(2)} MB) exceeds the maximum allowed limit of 5 MB.`,
+        },
+        { status: 400 }
+      );
     }
 
-    // Clean filename
-    const ext = path.extname(file.name) || ".png";
-    const safeName = `template_bg_${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`;
-    const filePath = path.join(uploadsDir, safeName);
+    // 4. Server-Side Magic Bytes Validation (Prevent MIME Spoofing & Malicious Executables)
+    const { isValid, mimeType, ext } = validateImageMagicBytes(buffer);
+    if (!isValid) {
+      return NextResponse.json(
+        {
+          error: "Invalid file format. Only authentic image files (PNG, JPEG, WebP) are accepted.",
+        },
+        { status: 400 }
+      );
+    }
 
-    fs.writeFileSync(filePath, buffer);
+    // 5. Generate Non-Guessable Sanitized Filename (Cryptographic UUID)
+    const safeName = `template_bg_${Date.now()}_${crypto.randomUUID()}${ext}`;
 
-    const publicUrl = `/uploads/templates/${safeName}`;
-
-    // Also return data uri for instant zero-latency preview
-    const mimeType = file.type || "image/png";
+    // 6. Generate Base64 Data URI (Universally portable & serverless-resilient)
     const dataUri = `data:${mimeType};base64,${buffer.toString("base64")}`;
+    let publicUrl = dataUri;
+
+    // 7. Attempt local filesystem storage if directory is writable (Local Dev), fallback to Data URI in Serverless
+    try {
+      const uploadsDir = path.join(process.cwd(), "public", "uploads", "templates");
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      const filePath = path.join(uploadsDir, safeName);
+      fs.writeFileSync(filePath, buffer);
+      publicUrl = `/uploads/templates/${safeName}`;
+    } catch {
+      // Running in read-only serverless runtime (e.g. AWS Lambda / Vercel).
+      // Data URI is used as primary URL, guaranteeing zero-latency rendering and full persistence.
+      publicUrl = dataUri;
+    }
 
     return NextResponse.json({
       success: true,

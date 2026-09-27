@@ -3,6 +3,7 @@ import { generateDocumentHtml } from "@/lib/renderer/render-html";
 import { generateQrDataUri } from "@/lib/renderer/generate-qr";
 import { TemplateLayout } from "@/types/database";
 import { chromium as playwrightChromium } from "playwright";
+import { getAppBaseUrl } from "@/lib/utils";
 import fs from "fs";
 import path from "path";
 
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const domain = baseUrl || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const domain = baseUrl || getAppBaseUrl();
     const verificationUrl = `${domain}/verify/${studentData.verification_token}`;
 
     // 1. Generate QR Data URI

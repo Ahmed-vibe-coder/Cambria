@@ -16,6 +16,8 @@ import {
   addAuditLog,
 } from "@/lib/db";
 import { CredentialStatus, DocumentType } from "@/types/database";
+import { getAppBaseUrl } from "@/lib/utils";
+
 
 const createCredentialSchema = z.object({
   student_id: z.string().min(1, "Student selection is required"),
@@ -43,6 +45,8 @@ export async function createCredentialAction(prevState: any, formData: FormData)
     expiry_date: (formData.get("expiry_date") as string) || null,
     generate_certificate: formData.get("generate_certificate") === "on",
     generate_student_card: formData.get("generate_student_card") === "on",
+    certificate_template_id: (formData.get("certificate_template_id") as string) || null,
+    card_template_id: (formData.get("card_template_id") as string) || null,
     notes: (formData.get("notes") as string) || undefined,
   };
 
@@ -150,7 +154,7 @@ async function triggerRenderForDocument(
     : await getTemplateByKind(documentType);
   if (!template) return;
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = getAppBaseUrl();
 
   // Invoke internal Chromium Route Handler
   try {

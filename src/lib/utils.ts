@@ -5,6 +5,31 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function getAppBaseUrl(): string {
+  // 1. Explicit production or custom domain override
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (envUrl && !envUrl.includes("localhost")) {
+    return envUrl.replace(/\/+$/, "");
+  }
+
+  // 2. Vercel System Environment Variables (automatically set on Vercel deploys)
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
+  // 3. Localhost development fallback only when NOT running on Vercel
+  if (!process.env.VERCEL && envUrl) {
+    return envUrl.replace(/\/+$/, "");
+  }
+
+  // 4. Default Production Canonical Domain
+  return "https://cambria-five.vercel.app";
+}
+
+
 export function formatDate(dateString?: string | null): string {
   if (!dateString) return "N/A";
   try {
