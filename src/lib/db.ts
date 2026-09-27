@@ -248,6 +248,40 @@ export async function getStudentById(id: string): Promise<Student | null> {
   return students.find((s) => s.id === id) || null;
 }
 
+export async function getStudentByEmail(email: string): Promise<Student | null> {
+  const cleanEmail = email.trim().toLowerCase();
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("students")
+        .select("*")
+        .eq("email", cleanEmail)
+        .maybeSingle();
+      if (!error && data) return data as Student;
+    } catch {}
+  }
+  const students = await getStudents();
+  return students.find((s) => s.email.toLowerCase() === cleanEmail) || null;
+}
+
+export async function getStudentByIdNumber(idNumber: string): Promise<Student | null> {
+  const cleanId = idNumber.trim().toUpperCase();
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("students")
+        .select("*")
+        .eq("student_id_number", cleanId)
+        .maybeSingle();
+      if (!error && data) return data as Student;
+    } catch {}
+  }
+  const students = await getStudents();
+  return students.find((s) => s.student_id_number.toUpperCase() === cleanId) || null;
+}
+
 export async function createStudent(
   input: Omit<Student, "id" | "created_at" | "updated_at">
 ): Promise<Student> {
@@ -741,6 +775,24 @@ export function generateVerificationToken(): string {
   return `tok_${randBytes}`;
 }
 
+function parseCredentialNotes(cred: any): any {
+  if (!cred) return cred;
+  if (cred.notes && typeof cred.notes === "string" && cred.notes.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(cred.notes);
+      if (parsed && typeof parsed === "object") {
+        if (parsed.custom_fields) {
+          cred.custom_fields = { ...(cred.custom_fields || {}), ...parsed.custom_fields };
+        }
+        if (parsed.text !== undefined) {
+          cred.notes = parsed.text;
+        }
+      }
+    } catch {}
+  }
+  return cred;
+}
+
 export async function createCredential(input: {
   student_id: string;
   program_id: string;
@@ -754,10 +806,21 @@ export async function createCredential(input: {
   generate_student_card?: boolean;
   certificate_template_id?: string | null;
   card_template_id?: string | null;
+  custom_fields?: Record<string, any>;
 }): Promise<Credential> {
   const credentialNumber = await generateCredentialNumber();
   const verificationToken = generateVerificationToken();
   const credentialId = crypto.randomUUID();
+
+  let notesPayload = input.notes || null;
+  if (input.custom_fields && Object.keys(input.custom_fields).length > 0) {
+    try {
+      notesPayload = JSON.stringify({
+        text: input.notes || "",
+        custom_fields: input.custom_fields,
+      });
+    } catch {}
+  }
 
   const newCred: any = {
     id: credentialId,
@@ -768,8 +831,9 @@ export async function createCredential(input: {
     status: "draft",
     issue_date: input.issue_date || new Date().toISOString().split("T")[0],
     expiry_date: input.expiry_date || null,
-    notes: input.notes || null,
+    notes: notesPayload,
     created_by: input.created_by || null,
+    custom_fields: input.custom_fields || {},
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
