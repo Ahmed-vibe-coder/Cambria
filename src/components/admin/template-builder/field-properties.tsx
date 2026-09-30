@@ -24,6 +24,15 @@ import {
   Image as ImageIcon,
   ChevronRight,
   Check,
+  Lock,
+  Unlock,
+  Eye,
+  EyeOff,
+  ArrowUp,
+  ArrowDown,
+  ChevronsUp,
+  ChevronsDown,
+  Ratio,
 } from "lucide-react";
 
 export interface FieldPropertiesProps {
@@ -37,6 +46,13 @@ export interface FieldPropertiesProps {
   onDeleteField: (id: string) => void;
   onDuplicateField: (id: string) => void;
   onAddFieldPreset?: (preset: FieldPreset) => void;
+  onBringToFront?: (id: string) => void;
+  onSendToBack?: (id: string) => void;
+  onMoveForward?: (id: string) => void;
+  onMoveBackward?: (id: string) => void;
+  onToggleLock?: (id: string) => void;
+  onToggleVisibility?: (id: string) => void;
+  onAlignField?: (id: string, align: "left" | "center-h" | "right" | "top" | "center-v" | "bottom") => void;
 }
 
 const PRESET_COLORS = [
@@ -96,6 +112,13 @@ export function FieldPropertiesPanel({
   onDeleteField,
   onDuplicateField,
   onAddFieldPreset,
+  onBringToFront,
+  onSendToBack,
+  onMoveForward,
+  onMoveBackward,
+  onToggleLock,
+  onToggleVisibility,
+  onAlignField,
 }: FieldPropertiesProps) {
   // If NO field is currently selected, display the Canvas Layers & Elements List
   if (!field) {
@@ -139,13 +162,16 @@ export function FieldPropertiesPanel({
                   <div
                     key={f.id}
                     onClick={() => onSelectField?.(f.id)}
-                    className={`w-full text-left p-2.5 rounded-md border flex items-center justify-between gap-2 cursor-pointer transition-all ${
+                    className={`w-full text-left p-2 rounded-md border flex items-center justify-between gap-1.5 cursor-pointer transition-all ${
                       isSelected
                         ? "border-[#C8A84E] bg-[#C8A84E]/10 text-white shadow-sm"
                         : "border-slate-800 bg-slate-900 hover:border-slate-700 hover:bg-slate-800/80 text-slate-300"
-                    }`}
+                    } ${f.isHidden ? "opacity-40" : ""}`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-[10px] font-mono text-slate-500 w-4 text-center shrink-0">
+                        #{idx + 1}
+                      </span>
                       <div className="w-6 h-6 rounded flex items-center justify-center bg-slate-800 text-[#C8A84E] shrink-0 border border-slate-700">
                         {f.type === "qr" ? (
                           <QrCode className="w-3.5 h-3.5" />
@@ -156,8 +182,9 @@ export function FieldPropertiesPanel({
                         )}
                       </div>
                       <div className="min-w-0">
-                        <div className="font-semibold text-xs text-white truncate">
-                          {f.label || f.id}
+                        <div className="font-semibold text-xs text-white truncate flex items-center gap-1.5">
+                          <span>{f.label || f.id}</span>
+                          {f.isLocked && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
                         </div>
                         <div className="text-[10px] text-slate-400 font-mono truncate">
                           {f.x},{f.y} • {f.w}×{f.h}px
@@ -165,7 +192,49 @@ export function FieldPropertiesPanel({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onToggleVisibility?.(f.id)}
+                        title={f.isHidden ? "Show Element" : "Hide Element"}
+                        className="h-6 w-6 p-0 text-slate-400 hover:text-white hover:bg-slate-700"
+                      >
+                        {f.isHidden ? <EyeOff className="w-3 h-3 text-rose-400" /> : <Eye className="w-3 h-3" />}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onToggleLock?.(f.id)}
+                        title={f.isLocked ? "Unlock Position" : "Lock Position"}
+                        className="h-6 w-6 p-0 text-slate-400 hover:text-white hover:bg-slate-700"
+                      >
+                        {f.isLocked ? <Lock className="w-3 h-3 text-amber-400" /> : <Unlock className="w-3 h-3" />}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={idx === fields.length - 1}
+                        onClick={() => onMoveForward?.(f.id)}
+                        title="Move Up in Stack"
+                        className="h-6 w-6 p-0 text-slate-400 hover:text-white hover:bg-slate-700 disabled:opacity-20"
+                      >
+                        <ArrowUp className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={idx === 0}
+                        onClick={() => onMoveBackward?.(f.id)}
+                        title="Move Down in Stack"
+                        className="h-6 w-6 p-0 text-slate-400 hover:text-white hover:bg-slate-700 disabled:opacity-20"
+                      >
+                        <ArrowDown className="w-3 h-3" />
+                      </Button>
                       <Button
                         type="button"
                         variant="ghost"
@@ -180,9 +249,10 @@ export function FieldPropertiesPanel({
                         type="button"
                         variant="ghost"
                         size="sm"
+                        disabled={f.isLocked}
                         onClick={() => onDeleteField(f.id)}
-                        title="Delete"
-                        className="h-6 w-6 p-0 text-rose-400 hover:text-rose-300 hover:bg-rose-950/40"
+                        title={f.isLocked ? "Unlock to delete" : "Delete"}
+                        className="h-6 w-6 p-0 text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 disabled:opacity-20"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -279,12 +349,201 @@ export function FieldPropertiesPanel({
             type="button"
             variant="ghost"
             size="sm"
+            disabled={field.isLocked}
             onClick={() => onDeleteField(field.id)}
-            title="Delete Field"
-            className="h-7 w-7 p-0 text-rose-400 hover:text-rose-300 hover:bg-rose-950/40"
+            title={field.isLocked ? "Unlock to delete" : "Delete Field"}
+            className="h-7 w-7 p-0 text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 disabled:opacity-20"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </Button>
+        </div>
+      </div>
+
+      {/* Lock Banner Notice */}
+      {field.isLocked && (
+        <div className="flex items-center justify-between p-2.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs animate-in fade-in">
+          <div className="flex items-center gap-2 min-w-0">
+            <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="truncate">
+              Element is <strong>Locked</strong> against moving.
+            </span>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => onToggleLock?.(field.id)}
+            className="h-6 text-[10px] px-2 border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/30 shrink-0"
+          >
+            Unlock
+          </Button>
+        </div>
+      )}
+
+      {/* Quick Alignment Toolbar */}
+      <div className="space-y-1.5 pt-1">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-semibold text-slate-300">Quick Alignment</span>
+        </div>
+        <div className="grid grid-cols-6 gap-1">
+          <button
+            type="button"
+            disabled={field.isLocked}
+            onClick={() => onAlignField ? onAlignField(field.id, "left") : onUpdateField(field.id, { x: 0 })}
+            className="h-7 rounded border border-slate-800 bg-slate-900 hover:bg-slate-800 hover:border-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-[10px] font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Align Left (محاذاة لليسار)"
+          >
+            Left
+          </button>
+          <button
+            type="button"
+            disabled={field.isLocked}
+            onClick={() => onAlignField ? onAlignField(field.id, "center-h") : centerHorizontally()}
+            className="h-7 rounded border border-slate-800 bg-slate-900 hover:bg-slate-800 hover:border-slate-700 text-[#C8A84E] flex items-center justify-center text-[10px] font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Center Horizontally (توسيط أفقي)"
+          >
+            Center H
+          </button>
+          <button
+            type="button"
+            disabled={field.isLocked}
+            onClick={() => onAlignField ? onAlignField(field.id, "right") : onUpdateField(field.id, { x: Math.max(0, canvasWidth - field.w) })}
+            className="h-7 rounded border border-slate-800 bg-slate-900 hover:bg-slate-800 hover:border-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-[10px] font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Align Right (محاذاة لليمين)"
+          >
+            Right
+          </button>
+          <button
+            type="button"
+            disabled={field.isLocked}
+            onClick={() => onAlignField ? onAlignField(field.id, "top") : onUpdateField(field.id, { y: 0 })}
+            className="h-7 rounded border border-slate-800 bg-slate-900 hover:bg-slate-800 hover:border-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-[10px] font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Align Top (محاذاة لأعلى)"
+          >
+            Top
+          </button>
+          <button
+            type="button"
+            disabled={field.isLocked}
+            onClick={() => onAlignField ? onAlignField(field.id, "center-v") : centerVertically()}
+            className="h-7 rounded border border-slate-800 bg-slate-900 hover:bg-slate-800 hover:border-slate-700 text-[#C8A84E] flex items-center justify-center text-[10px] font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Center Vertically (توسيط رأسي)"
+          >
+            Center V
+          </button>
+          <button
+            type="button"
+            disabled={field.isLocked}
+            onClick={() => onAlignField ? onAlignField(field.id, "bottom") : onUpdateField(field.id, { y: Math.max(0, canvasHeight - field.h) })}
+            className="h-7 rounded border border-slate-800 bg-slate-900 hover:bg-slate-800 hover:border-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-[10px] font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Align Bottom (محاذاة لأسفل)"
+          >
+            Bottom
+          </button>
+        </div>
+      </div>
+
+      {/* Layer Arrangement & Hierarchy */}
+      <div className="space-y-1.5 pt-2 border-t border-slate-800">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+            <Layers className="w-3.5 h-3.5 text-[#C8A84E]" />
+            Layer Hierarchy
+          </span>
+        </div>
+        <div className="grid grid-cols-4 gap-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onBringToFront?.(field.id)}
+            className="h-7 text-[10px] px-1 border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 gap-1"
+            title="Bring to Very Front (إلى المقدمة تماماً)"
+          >
+            <ChevronsUp className="w-3 h-3 text-[#C8A84E]" />
+            To Front
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onMoveForward?.(field.id)}
+            className="h-7 text-[10px] px-1 border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 gap-1"
+            title="Move Up 1 Layer (تقديم للأمام)"
+          >
+            <ArrowUp className="w-3 h-3" />
+            Up
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onMoveBackward?.(field.id)}
+            className="h-7 text-[10px] px-1 border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 gap-1"
+            title="Move Down 1 Layer (تأخير للخلف)"
+          >
+            <ArrowDown className="w-3 h-3" />
+            Down
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onSendToBack?.(field.id)}
+            className="h-7 text-[10px] px-1 border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 gap-1"
+            title="Send to Very Back (إلى الخلفية تماماً)"
+          >
+            <ChevronsDown className="w-3 h-3 text-slate-400" />
+            To Back
+          </Button>
+        </div>
+      </div>
+
+      {/* Protection & Behavior Controls */}
+      <div className="space-y-1.5 pt-2 border-t border-slate-800">
+        <span className="text-[11px] font-semibold text-slate-300">Protection & Behavior</span>
+        <div className="grid grid-cols-3 gap-1.5">
+          <button
+            type="button"
+            onClick={() => onToggleLock?.(field.id)}
+            className={`h-7 px-2 rounded border flex items-center justify-center gap-1.5 text-[10px] font-medium transition-colors ${
+              field.isLocked
+                ? "border-amber-500 bg-amber-500/20 text-amber-300 font-bold"
+                : "border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white"
+            }`}
+            title="Lock or Unlock position from accidental drag"
+          >
+            {field.isLocked ? <Lock className="w-3 h-3 text-amber-400" /> : <Unlock className="w-3 h-3" />}
+            <span>{field.isLocked ? "Locked" : "Unlocked"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onUpdateField(field.id, { lockAspectRatio: !field.lockAspectRatio })}
+            className={`h-7 px-2 rounded border flex items-center justify-center gap-1.5 text-[10px] font-medium transition-colors ${
+              field.lockAspectRatio
+                ? "border-[#C8A84E] bg-[#C8A84E]/20 text-[#C8A84E] font-bold"
+                : "border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white"
+            }`}
+            title="Lock aspect ratio when resizing"
+          >
+            <Ratio className="w-3 h-3" />
+            <span>{field.lockAspectRatio ? "Ratio Locked" : "Free Ratio"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onToggleVisibility?.(field.id)}
+            className={`h-7 px-2 rounded border flex items-center justify-center gap-1.5 text-[10px] font-medium transition-colors ${
+              field.isHidden
+                ? "border-rose-500 bg-rose-500/20 text-rose-300 font-bold"
+                : "border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white"
+            }`}
+            title="Hide or show element"
+          >
+            {field.isHidden ? <EyeOff className="w-3 h-3 text-rose-400" /> : <Eye className="w-3 h-3" />}
+            <span>{field.isHidden ? "Hidden" : "Visible"}</span>
+          </button>
         </div>
       </div>
 

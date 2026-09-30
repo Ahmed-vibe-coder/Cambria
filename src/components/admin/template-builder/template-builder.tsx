@@ -29,6 +29,8 @@ import {
   Sliders,
   Layers,
   Download,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 
 interface TemplateBuilderProps {
@@ -63,6 +65,83 @@ export function TemplateBuilder({
   );
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
 
+  // Undo / Redo History Stack
+  const [history, setHistory] = useState<TemplateField[][]>([
+    initialTemplate?.layout_schema?.fields || [],
+  ]);
+  const [historyIndex, setHistoryIndex] = useState<number>(0);
+
+  const pushHistory = React.useCallback(
+    (newFields: TemplateField[]) => {
+      setHistory((prev) => {
+        const upToCurrent = prev.slice(0, historyIndex + 1);
+        const updated = [...upToCurrent, newFields];
+        if (updated.length > 50) updated.shift();
+        return updated;
+      });
+      setHistoryIndex((prev) => Math.min(prev + 1, 49));
+    },
+    [historyIndex]
+  );
+
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
+
+  const handleUndo = React.useCallback(() => {
+    if (historyIndex > 0) {
+      const prevIdx = historyIndex - 1;
+      setHistoryIndex(prevIdx);
+      const snapshot = history[prevIdx];
+      setFields(snapshot);
+      if (selectedFieldId && !snapshot.some((f) => f.id === selectedFieldId)) {
+        setSelectedFieldId(null);
+      }
+    }
+  }, [history, historyIndex, selectedFieldId]);
+
+  const handleRedo = React.useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      const nextIdx = historyIndex + 1;
+      setHistoryIndex(nextIdx);
+      const snapshot = history[nextIdx];
+      setFields(snapshot);
+      if (selectedFieldId && !snapshot.some((f) => f.id === selectedFieldId)) {
+        setSelectedFieldId(null);
+      }
+    }
+  }, [history, historyIndex, selectedFieldId]);
+
+  // Global Keyboard shortcuts for Undo / Redo
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (
+        activeEl &&
+        (activeEl.tagName === "INPUT" ||
+          activeEl.tagName === "TEXTAREA" ||
+          activeEl.tagName === "SELECT")
+      ) {
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+        if (e.shiftKey) {
+          e.preventDefault();
+          handleRedo();
+        } else {
+          e.preventDefault();
+          handleUndo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [handleUndo, handleRedo]);
+
   // Viewport & Editor UI State
   const [zoom, setZoom] = useState<number>(0.55);
   const [showGrid, setShowGrid] = useState<boolean>(true);
@@ -87,17 +166,24 @@ export function TemplateBuilder({
   const selectedField = fields.find((f) => f.id === selectedFieldId) || null;
 
   // Add a field from preset
-  const handleAddFieldFromPreset = React.useCallback((preset: FieldPreset) => {
-    const newField: TemplateField = {
-      ...preset.field,
-      id: `field_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-    };
+  const handleAddFieldFromPreset = React.useCallback(
+    (preset: FieldPreset) => {
+      const newField: TemplateField = {
+        ...preset.field,
+        id: `field_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      };
 
-    setFields((prev) => [...prev, newField]);
-    setSelectedFieldId(newField.id);
-    setIsAddFieldOpen(false);
-    setIsSidebarOpen(true);
-  }, []);
+      setFields((prev) => {
+        const next = [...prev, newField];
+        pushHistory(next);
+        return next;
+      });
+      setSelectedFieldId(newField.id);
+      setIsAddFieldOpen(false);
+      setIsSidebarOpen(true);
+    },
+    [pushHistory]
+  );
 
   // Update a field's attributes
   const handleUpdateField = React.useCallback((id: string, updates: Partial<TemplateField>) => {
@@ -106,30 +192,161 @@ export function TemplateBuilder({
     );
   }, []);
 
+  // Commit drag/resize to history
+  const handleCommitHistory = React.useCallback(() => {
+    setFields((current) => {
+      pushHistory(current);
+      return current;
+    });
+  }, [pushHistory]);
+
   // Delete a field
-  const handleDeleteField = React.useCallback((id: string) => {
-    setFields((prev) => prev.filter((f) => f.id !== id));
-    setSelectedFieldId((current) => (current === id ? null : current));
-  }, []);
+  const handleDeleteField = React.useCallback(
+    (id: string) => {
+      setFields((prev) => {
+        const next = prev.filter((f) => f.id !== id);
+        pushHistory(next);
+        return next;
+      });
+      setSelectedFieldId((current) => (current === id ? null : current));
+    },
+    [pushHistory]
+  );
 
   // Duplicate a field
-  const handleDuplicateField = React.useCallback((id: string) => {
-    setFields((prev) => {
-      const target = prev.find((f) => f.id === id);
-      if (!target) return prev;
+  const handleDuplicateField = React.useCallback(
+    (id: string) => {
+      setFields((prev) => {
+        const target = prev.find((f) => f.id === id);
+        if (!target) return prev;
 
-      const dupField: TemplateField = {
-        ...target,
-        id: `field_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        x: Math.min(width - target.w, target.x + 30),
-        y: Math.min(height - target.h, target.y + 30),
-        label: `${target.label || target.id} (Copy)`,
-      };
+        const dupField: TemplateField = {
+          ...target,
+          id: `field_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          x: Math.min(width - target.w, target.x + 30),
+          y: Math.min(height - target.h, target.y + 30),
+          label: `${target.label || target.id} (Copy)`,
+        };
 
-      setSelectedFieldId(dupField.id);
-      return [...prev, dupField];
-    });
-  }, [width, height]);
+        const next = [...prev, dupField];
+        pushHistory(next);
+        setSelectedFieldId(dupField.id);
+        return next;
+      });
+    },
+    [width, height, pushHistory]
+  );
+
+  // Bring field to very front (top layer)
+  const handleBringToFront = React.useCallback(
+    (id: string) => {
+      setFields((prev) => {
+        const idx = prev.findIndex((f) => f.id === id);
+        if (idx === -1 || idx === prev.length - 1) return prev;
+        const item = prev[idx];
+        const next = [...prev.slice(0, idx), ...prev.slice(idx + 1), item];
+        pushHistory(next);
+        return next;
+      });
+    },
+    [pushHistory]
+  );
+
+  // Send field to very back (lowest layer)
+  const handleSendToBack = React.useCallback(
+    (id: string) => {
+      setFields((prev) => {
+        const idx = prev.findIndex((f) => f.id === id);
+        if (idx === -1 || idx === 0) return prev;
+        const item = prev[idx];
+        const next = [item, ...prev.slice(0, idx), ...prev.slice(idx + 1)];
+        pushHistory(next);
+        return next;
+      });
+    },
+    [pushHistory]
+  );
+
+  // Move forward one step
+  const handleMoveForward = React.useCallback(
+    (id: string) => {
+      setFields((prev) => {
+        const idx = prev.findIndex((f) => f.id === id);
+        if (idx === -1 || idx >= prev.length - 1) return prev;
+        const next = [...prev];
+        const temp = next[idx];
+        next[idx] = next[idx + 1];
+        next[idx + 1] = temp;
+        pushHistory(next);
+        return next;
+      });
+    },
+    [pushHistory]
+  );
+
+  // Move backward one step
+  const handleMoveBackward = React.useCallback(
+    (id: string) => {
+      setFields((prev) => {
+        const idx = prev.findIndex((f) => f.id === id);
+        if (idx <= 0) return prev;
+        const next = [...prev];
+        const temp = next[idx];
+        next[idx] = next[idx - 1];
+        next[idx - 1] = temp;
+        pushHistory(next);
+        return next;
+      });
+    },
+    [pushHistory]
+  );
+
+  // Toggle Lock
+  const handleToggleLock = React.useCallback(
+    (id: string) => {
+      setFields((prev) => {
+        const next = prev.map((f) => (f.id === id ? { ...f, isLocked: !f.isLocked } : f));
+        pushHistory(next);
+        return next;
+      });
+    },
+    [pushHistory]
+  );
+
+  // Toggle Visibility
+  const handleToggleVisibility = React.useCallback(
+    (id: string) => {
+      setFields((prev) => {
+        const next = prev.map((f) => (f.id === id ? { ...f, isHidden: !f.isHidden } : f));
+        pushHistory(next);
+        return next;
+      });
+    },
+    [pushHistory]
+  );
+
+  // Align Field
+  const handleAlignField = React.useCallback(
+    (id: string, align: "left" | "center-h" | "right" | "top" | "center-v" | "bottom") => {
+      setFields((prev) => {
+        const target = prev.find((f) => f.id === id);
+        if (!target || target.isLocked) return prev;
+
+        let updates: Partial<TemplateField> = {};
+        if (align === "left") updates = { x: 0 };
+        else if (align === "center-h") updates = { x: Math.max(0, Math.round((width - target.w) / 2)) };
+        else if (align === "right") updates = { x: Math.max(0, width - target.w) };
+        else if (align === "top") updates = { y: 0 };
+        else if (align === "center-v") updates = { y: Math.max(0, Math.round((height - target.h) / 2)) };
+        else if (align === "bottom") updates = { y: Math.max(0, height - target.h) };
+
+        const next = prev.map((f) => (f.id === id ? { ...f, ...updates } : f));
+        pushHistory(next);
+        return next;
+      });
+    },
+    [width, height, pushHistory]
+  );
 
   // Export Mockup High-Resolution PNG
   const [isExporting, setIsExporting] = useState(false);
@@ -329,6 +546,31 @@ export function TemplateBuilder({
             )}
           </div>
 
+          {/* Undo / Redo Controls */}
+          <div className="flex items-center rounded border border-slate-700 bg-slate-800 overflow-hidden h-8">
+            <button
+              type="button"
+              onClick={handleUndo}
+              disabled={!canUndo}
+              className="h-8 px-2.5 flex items-center gap-1 text-xs text-slate-300 hover:text-white hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+              <span className="hidden xl:inline text-[11px]">Undo</span>
+            </button>
+            <div className="w-[1px] h-3.5 bg-slate-700" />
+            <button
+              type="button"
+              onClick={handleRedo}
+              disabled={!canRedo}
+              className="h-8 px-2.5 flex items-center gap-1 text-xs text-slate-300 hover:text-white hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
+              title="Redo (Ctrl+Y / Ctrl+Shift+Z)"
+            >
+              <Redo2 className="w-3.5 h-3.5" />
+              <span className="hidden xl:inline text-[11px]">Redo</span>
+            </button>
+          </div>
+
           {/* Canvas Settings Modal Trigger */}
           <Button
             type="button"
@@ -463,6 +705,13 @@ export function TemplateBuilder({
               }
             }}
             onUpdateField={handleUpdateField}
+            onDeleteField={handleDeleteField}
+            onDuplicateField={handleDuplicateField}
+            onBringToFront={handleBringToFront}
+            onSendToBack={handleSendToBack}
+            onToggleLock={handleToggleLock}
+            onAlignField={(id, align) => handleAlignField(id, align)}
+            onCommitHistory={handleCommitHistory}
             zoom={zoom}
             showGrid={showGrid}
             previewMode={previewMode}
@@ -491,6 +740,13 @@ export function TemplateBuilder({
               onDeleteField={handleDeleteField}
               onDuplicateField={handleDuplicateField}
               onAddFieldPreset={handleAddFieldFromPreset}
+              onBringToFront={handleBringToFront}
+              onSendToBack={handleSendToBack}
+              onMoveForward={handleMoveForward}
+              onMoveBackward={handleMoveBackward}
+              onToggleLock={handleToggleLock}
+              onToggleVisibility={handleToggleVisibility}
+              onAlignField={handleAlignField}
             />
           </aside>
         )}

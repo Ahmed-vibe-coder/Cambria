@@ -183,6 +183,9 @@ export interface TemplateField {
   lineHeight?: number;
   fontStyle?: string;
   staticPrefix?: string;
+  isLocked?: boolean;
+  isHidden?: boolean;
+  lockAspectRatio?: boolean;
 }
 
 export interface TemplateLayout {
